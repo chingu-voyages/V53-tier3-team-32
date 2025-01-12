@@ -39,6 +39,7 @@ coding!
 - Andreea Tohatan [GitHub](http://github.com/Andreea-A-T) / [LinkedIn](http://linkedin.com/in/andreea-anamaria-tohatan)
 - Denis Mwangi: [GitHub](https://github.com/denismwangikimani) / [LinkedIn](https://www.linkedin.com/in/denis-kimani)
 - Ibrahim Abdoh: [GitHub](https://github.com/ibrahim-b-dev) / [LinkedIn](https://linkedin.com/)
+- Oshada Kularathne: [GitHub](https://github.com/devimalka) / [LinkedIn](https://linkedin.com/in/oshada-kularathne)
 
    ...
 - Teammate name #n: [GitHub](https://github.com/ghaccountname) / [LinkedIn](https://linkedin.com/in/liaccountname)
