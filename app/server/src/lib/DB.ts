@@ -8,12 +8,11 @@ const db_name: string = process.env.DB_NAME!;
 class DB{
     private static instance: mongoose.Connection;
 
-    public static connect(){
+     public static  connect(){
 
         if(!DB.instance){
-            DB.instance = mongoose.createConnection(mongodburi)
+            DB.instance =  mongoose.createConnection(mongodburi);
             console.log('db connectod')
-            console.log(db_name + " " + mongodburi)
         }
         return DB.instance
     }
