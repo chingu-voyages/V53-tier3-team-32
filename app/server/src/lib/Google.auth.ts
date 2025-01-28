@@ -26,7 +26,7 @@ passport.use(
             done: Function,
         ) {
             try{
-                
+                console.log(profile);
                 const currentUser = await User.findOne({googleid: profile.id});
                 if(currentUser){
                     console.log(currentUser + "has been found");
@@ -35,7 +35,7 @@ passport.use(
 
                 const newUser = await User.create({
                     googleid: profile.id,
-                    email : profile.emails[0].values,
+                    email : profile.emails[0].value,
                     username: profile.displayName,
                 });
 
