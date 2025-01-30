@@ -1,4 +1,4 @@
-import mongoose, { Model, Mongoose, Schema } from "mongoose";
+import { Model, Schema } from "mongoose";
 import IUser from "../interface/IUser";
 import DB from "../../lib/DB";
 
@@ -7,6 +7,7 @@ const UserSchema = new Schema<IUser>({
   githubid: { type: String },
   email: { type: String, required: true},
   username: { type: String, required: true, unique: true },
+  allergies: { type: [String], default: [] },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 });

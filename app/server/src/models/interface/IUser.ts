@@ -5,4 +5,5 @@ export default interface IUser {
   email: string;
   created_at: Date;
   updated_at: Date;
+  allergies?: string[];
 }
