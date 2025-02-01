@@ -1,11 +1,11 @@
 import express, { Request, Response } from "express";
-import { IndexRoute } from "./routes";
 import DB from "./lib/DB";
-import { authroute } from "./routes/auth";
 import { json } from "body-parser";
 import passport from 'passport';
 const session  = require('express-session');
 require("dotenv").config();
+
+import router from "./routes/index";
 
 DB;
 
@@ -24,8 +24,7 @@ app.use(
 );
 
 app.use(json());
-app.use("/", IndexRoute);
-app.use("/auth", authroute);
+app.use("/", router);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

@@ -1,9 +1,13 @@
 import { Router } from "express";
 import controller from "../controllers/index";
 
-export const IndexRoute = Router();
+import { AllergyRoute } from "./allergy";
+import { authroute } from "./auth";
 
-IndexRoute.get('/',controller.index);
-IndexRoute.get('/register',controller.register);
+const router = Router();
 
+router.use('/allergy',AllergyRoute);
+router.use('/auth',authroute);
+
+export default router;
 
