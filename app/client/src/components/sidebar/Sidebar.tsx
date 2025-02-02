@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -8,11 +8,26 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import Collapse from "@mui/material/Collapse";
-import SickIcon from '@mui/icons-material/Sick';
+import SickIcon from "@mui/icons-material/Sick";
+
+interface IUser {
+  username: string;
+  email: string;
+  profileImage?: string;
+}
 
 const Sidebar = () => {
   const [dishManagementOpen, setDishManagementOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [user, setUser] = useState<IUser | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const handleDishManagementToggle = () => {
     setDishManagementOpen(!dishManagementOpen);
@@ -26,10 +41,17 @@ const Sidebar = () => {
     setIsSidebarOpen(false);
   };
 
+  const handleLogout = () => {
+    // Clear user information from local storage
+    localStorage.removeItem("user");
+    // Redirect to the backend logout endpoint
+    window.location.href = "http://localhost:3000/auth/logout";
+  };
+
   return (
     <>
       {/* Hamburger Menu Button - Only visible on mobile */}
-      <button 
+      <button
         onClick={toggleSidebar}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md hover:bg-gray-700/50 transition-colors"
       >
@@ -38,18 +60,22 @@ const Sidebar = () => {
 
       {/* Rest of the component remains the same */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={closeSidebar}
         />
       )}
 
-      <div className={`
+      <div
+        className={`
         fixed lg:static h-screen w-64 bg-gray-500 text-white flex flex-col
         transform transition-transform duration-300 ease-in-out z-50
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        <button 
+        ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }
+      `}
+      >
+        <button
           onClick={closeSidebar}
           className="lg:hidden absolute top-4 right-4 text-white"
         >
@@ -57,12 +83,23 @@ const Sidebar = () => {
         </button>
 
         <div className="flex items-center py-6 px-4">
-          <img
-            src="/images/background.jpg"
-            alt="User"
-            className="w-20 h-20 rounded-full mr-3"
-          />
-          <h2 className="text-lg font-semibold">username</h2>
+          {user && user.profileImage ? (
+            <img
+              src={user.profileImage}
+              alt="User"
+              className="w-20 h-20 rounded-full mr-3"
+            />
+          ) : (
+            // Show first letter of username if no profile image
+            <div className="w-20 h-20 rounded-full mr-3 flex items-center justify-center bg-blue-500 text-white text-2xl">
+              {user && user.username && user.username.length > 0
+                ? user.username[0].toUpperCase()
+                : "U"}
+            </div>
+          )}
+          <h2 className="text-lg font-semibold">
+            {user && user.username ? user.username : "username"}
+          </h2>
         </div>
 
         <nav className="flex-grow">
@@ -148,14 +185,13 @@ const Sidebar = () => {
         </nav>
 
         <div className="p-4">
-          <Link
-            to="/logout"
+          <button
+            onClick={handleLogout}
             className="flex items-center space-x-3 p-3 text-red-500 rounded hover:bg-gray-700"
-            onClick={closeSidebar}
           >
             <LogoutIcon />
             <span>Logout</span>
-          </Link>
+          </button>
         </div>
       </div>
     </>

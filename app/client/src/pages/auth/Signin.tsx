@@ -1,9 +1,57 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
 const Signin = () => {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    identifier: "",
+    password: "",
+  });
+
+  // Handle form input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch("http://localhost:3000/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store user information and token in local storage
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+        // Successful signin, redirect to dashboard
+        navigate("/");
+      } else {
+        alert(data.message || "Signin failed");
+      }
+    } catch (err) {
+      console.error("Error during signin:", err);
+      alert("An error occurred during signin");
+    }
+  };
+
+  // OAuth handlers
+  const handleGoogleSignin = () => {
+    window.location.href = "http://localhost:3000/auth/google/";
+  };
+
+  const handleGithubSignin = () => {
+    window.location.href = "http://localhost:3000/auth/github/";
+  };
+
   return (
     <div
       className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center"
@@ -13,24 +61,36 @@ const Signin = () => {
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4">
         <h2 className="text-2xl font-semibold text-center mb-4">Sign In</h2>
         <div className="text-center mt-6">
-          <button className="w-full flex items-center justify-center bg-white border p-3 rounded mb-4">
+          <button 
+            onClick={handleGoogleSignin}
+            className="w-full flex items-center justify-center bg-white border p-3 rounded mb-4"
+          >
             <GoogleIcon className="h-5 w-5 mr-2" />
             Signin with Google
           </button>
-          <button className="w-full flex items-center justify-center bg-white border p-3 rounded mb-4">
+          <button 
+            onClick={handleGithubSignin}
+            className="w-full flex items-center justify-center bg-white border p-3 rounded mb-4"
+          >
             <GitHubIcon className="h-5 w-5 mr-2" />
             Signin with GitHub
           </button>
         </div>
         <h2 className="text-sm font-semibold text-center mb-4">-OR-</h2>
-        <form className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="email"
-            placeholder="Email"
+            type="text"
+            name="identifier" 
+            value={form.identifier}
+            onChange={handleChange}
+            placeholder="Username or Email"
             className="w-full p-3 border border-gray-300 rounded"
           />
           <input
             type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
             placeholder="Password"
             className="w-full p-3 border border-gray-300 rounded"
           />
