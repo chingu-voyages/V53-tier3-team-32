@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Signin from "./pages/Signin.tsx";
-import Signup from "./pages/Signup.tsx";
+import Signin from "./pages/auth/Signin.tsx";
+import Signup from "./pages/auth/Signup.tsx";
 import Layout from "./components/sidebar/Layout.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import AllergiesPage from "./pages/AllergiesPage.tsx";
