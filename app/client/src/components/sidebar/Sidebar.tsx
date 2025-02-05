@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -20,7 +20,7 @@ const Sidebar = () => {
   const [dishManagementOpen, setDishManagementOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<IUser | null>(null);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

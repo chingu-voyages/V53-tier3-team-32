@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Signin from "./pages/auth/Signin.tsx";
 import Signup from "./pages/auth/Signup.tsx";
 import Layout from "./components/sidebar/Layout.tsx";
+import PrivateRoute from "./components/PrivateRoute.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import AllergiesPage from "./pages/AllergiesPage.tsx";
 import SchedulesPage from "./pages/SchedulesPage.tsx";
@@ -22,49 +23,61 @@ const App = () => {
         <Route
           path="/"
           element={
-            <Layout>
-              <Dashboard />
-            </Layout>
+            <PrivateRoute>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/allergies"
           element={
-            <Layout>
-              <AllergiesPage />
-            </Layout>
+            <PrivateRoute>
+              <Layout>
+                <AllergiesPage />
+              </Layout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/schedules"
           element={
-            <Layout>
-              <SchedulesPage />
-            </Layout>
+            <PrivateRoute>
+              <Layout>
+                <SchedulesPage />
+              </Layout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/dish-assignment"
           element={
-            <Layout>
-              <DishAssignmentPage />
-            </Layout>
+            <PrivateRoute>
+              <Layout>
+                <DishAssignmentPage />
+              </Layout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/allergen-restrictions"
           element={
-            <Layout>
-              <AllergenRestrictionsPage />
-            </Layout>
+            <PrivateRoute>
+              <Layout>
+                <AllergenRestrictionsPage />
+              </Layout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/order-preparations"
           element={
-            <Layout>
-              <OrderPreparationsPage />
-            </Layout>
+            <PrivateRoute>
+              <Layout>
+                <OrderPreparationsPage />
+              </Layout>
+            </PrivateRoute>
           }
         />
       </Routes>

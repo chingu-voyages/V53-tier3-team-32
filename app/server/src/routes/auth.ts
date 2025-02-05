@@ -14,7 +14,7 @@ authroute.post("/signup", asyncHandler(controller.createUser));
 authroute.post("/signin", asyncHandler(controller.signin));
 
 // Protected routes
-//authroute.use(authenticateJWT);
+authroute.use(authenticateJWT);
 
 authroute.get("/logout", (req: Request, res: Response) => {
   req.logout(function (err) {

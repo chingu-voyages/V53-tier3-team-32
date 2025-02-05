@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { IndexRoute } from "./routes";
 import DB from "./lib/DB";
 import { authroute } from "./routes/auth";
+import { menuRouter } from "./routes/menu";
 import { json } from "body-parser";
 import passport from "passport";
 const session = require("express-session");
@@ -35,6 +36,7 @@ app.use(
 app.use(json());
 app.use("/", IndexRoute);
 app.use("/auth", authroute);
+app.use("/api/menu", menuRouter);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
