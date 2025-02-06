@@ -13,12 +13,14 @@
   "type": "commonjs",
   "description": "",
   "devDependencies": {
+    "@types/axios": "^0.9.36",
     "@types/bcrypt": "^5.0.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.1",
     "@types/jsonwebtoken": "^9.0.8",
+    "@types/pdfkit": "^0.13.9",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
@@ -28,6 +30,7 @@
     "@types/mongoose": "^5.11.96",
     "@types/passport": "^1.0.17",
     "@types/passport-oauth2": "^1.4.17",
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cookie-session": "^2.1.0",
@@ -40,6 +43,7 @@
     "passport-github": "^1.1.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "passport-oauth2": "^1.8.0"
+    "passport-oauth2": "^1.8.0",
+    "pdfkit": "^0.16.0"
   }
 }
