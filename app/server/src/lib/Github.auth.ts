@@ -2,15 +2,6 @@ require("dotenv").config();
 import { User } from "../models/schemas/User";
 import passport from "passport";
 const GithubStrategy = require("passport-github").Strategy;
-import IUser from "../models/interface/IUser";
-
-passport.serializeUser(function (user, done) {
-  done(null, user);
-});
-
-passport.deserializeUser(function (user, done) {
-  done(null, user as IUser);
-});
 
 passport.use(
   new GithubStrategy(
@@ -48,3 +39,16 @@ passport.use(
     },
   ),
 );
+
+passport.serializeUser((user: any, done: Function) => {
+  done(null, user._id);
+});
+
+passport.deserializeUser(async (id: string, done: Function) => {
+  try {
+    const user = await User.findOne({_id: id }); // Replace with your DB logic
+    done(null, user);
+  } catch (error) {
+    done(error);
+  }
+});
