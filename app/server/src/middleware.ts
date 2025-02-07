@@ -1,21 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { User } from "./models/schemas/User";
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-      };
-    }
-  }
-}
-
-export const authenticateJWT = (
+export const authenticateJWT = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
@@ -27,7 +18,16 @@ export const authenticateJWT = (
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       id: string;
     };
-    req.user = decoded;
+    
+    // Fetch the complete user object from database
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      res.status(401).json({ message: "User not found" });
+      return;
+    }
+
+    req.user = user;
     next();
   } catch (err) {
     res.status(403).json({ message: "Forbidden" });

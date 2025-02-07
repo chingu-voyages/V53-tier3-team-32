@@ -23,7 +23,7 @@ export const createWeeklyMenu = async (
       return;
     }
 
-    if (!req.user?.id) {
+    if (!req.user?._id) {
       res.status(401).json({
         message: "User not authenticated",
         success: false,
@@ -35,7 +35,7 @@ export const createWeeklyMenu = async (
       startDate,
       endDate,
       weeklyMenu,
-      createdBy: req.user.id,
+      createdBy: req.user._id,
     });
 
     res.status(201).json({
@@ -90,7 +90,7 @@ export const generateWeeklyMenu = async (
   res: Response
 ): Promise<void> => {
   try {
-    if (!req.user?.id) {
+    if (!req.user?._id) {
       res.status(401).json({
         message: "User not authenticated",
         success: false,
@@ -134,7 +134,7 @@ export const generateWeeklyMenu = async (
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       weeklyMenu,
-      createdBy: req.user.id,
+      createdBy: req.user._id,
     });
 
     res.status(201).json({
