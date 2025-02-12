@@ -1,4 +1,4 @@
-export default interface IAllergy {
+export interface Allergy {
   name: string;
   category: 'fruits' | 'vegetables' | 'dairy' | 'meat' | 'grains' | 'spices' | 'beverages';
   count: number;

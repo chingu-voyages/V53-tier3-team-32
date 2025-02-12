@@ -60,7 +60,7 @@ const SchedulesPage = () => {
       }
 
       alert("Menu created successfully");
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Error creating menu:", error);
       setError(

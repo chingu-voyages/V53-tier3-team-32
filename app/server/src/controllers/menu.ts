@@ -110,8 +110,8 @@ export const generateWeeklyMenu = async (
       ],
     });
 
-    // Get 21 random meals (3 meals per day for 7 days)
-    const meals = await mealApiService.getRandomMealsWithoutAllergies(21);
+    // Get meals separated by type
+    const meals = await mealApiService.getRandomMealsWithoutAllergies(35); // 7 breakfasts + 14 lunches + 14 dinners
 
     const weeklyMenu = [
       "Monday",
@@ -124,9 +124,9 @@ export const generateWeeklyMenu = async (
     ].map((day, index) => ({
       day,
       dishes: [
-        meals[index * 3].strMeal, // Breakfast
-        meals[index * 3 + 1].strMeal, // Lunch
-        meals[index * 3 + 2].strMeal, // Dinner
+        meals.breakfast[index]?.strMeal || "No breakfast available",
+        meals.mainDishes[index]?.strMeal || "No lunch available",
+        meals.mainDishes[index + 7]?.strMeal || "No dinner available",
       ],
     }));
 

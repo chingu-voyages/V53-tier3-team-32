@@ -1,140 +1,123 @@
-import { Allergy } from "../models/schemas/Allergy";
 import { Request, Response } from "express";
+import { Allergy } from "../models/schemas/Allergy";
 
-// Add allergy to collection
-const createAllergy = async (req: Request, res: Response): Promise<void> => {
+export const createAllergy = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { name, category } = req.body;
+
   try {
-    const { name } = req.body;
-    
-    if (!name) {
-      res.status(400).json({ msg: "Name is required" });
-      return;
-    }
-
-    const allergyExists = await Allergy.findOne({ name: name });
-    if (allergyExists) {
-      res.status(400).json({ msg: "Allergy already exists" });
-      return;
-    }
-
-    const newAllergy = await Allergy.create({ name });
-    res.status(201).json({ 
-      msg: "Allergy added successfully",
-      allergy: newAllergy 
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      msg: "Server error",
-      error: error instanceof Error ? error.message : "Unknown error" 
+    const allergy = new Allergy({ name, category });
+    await allergy.save();
+    res.status(201).json({ success: true, msg: "Allergy created", allergy });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      msg: error?.message || "Error creating allergy",
     });
   }
 };
 
-// Remove allergy from collection
-const deleteAllergy = async (req: Request, res: Response): Promise<void> => {
+export const getAllergies = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const { name } = req.body;
-    
-    if (!name) {
-      res.status(400).json({ msg: "Name is required" });
-      return;
-    }
+    const allergies = await Allergy.find()
+      .sort({ category: 1, name: 1 })
+      .collation({ locale: "en", strength: 2 });
 
-    const allergyExists = await Allergy.findOne({ name: name });
-    if (!allergyExists) {
-      res.status(404).json({ msg: "Allergy not found" });
-      return;
-    }
-
-    const deletedAllergy = await Allergy.deleteOne({ name: name });
-    if (deletedAllergy.deletedCount > 0) {
-      res.status(200).json({ msg: "Allergy deleted successfully" });
-    } else {
-      res.status(400).json({ msg: "Error deleting allergy" });
-    }
-  } catch (error) {
-    res.status(500).json({ 
-      msg: "Server error",
-      error: error instanceof Error ? error.message : "Unknown error" 
+    res.status(200).json({ success: true, allergies });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      msg: error?.message || "Error fetching allergies",
     });
   }
 };
 
-// Increment allergy count
-const allergyCountInc = async (req: Request, res: Response): Promise<void> => {
+export const createAllergiesByCategory = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const validCategories = [
+    "fruits",
+    "vegetables",
+    "dairy",
+    "meat",
+    "grains",
+    "spices",
+    "beverages",
+  ];
+
   try {
-    const { name } = req.body;
-    
-    if (!name) {
-      res.status(400).json({ msg: "Name is required" });
+    const allergiesData = req.body;
+
+    if (!Array.isArray(allergiesData)) {
+      res.status(400).json({
+        success: false,
+        msg: "Invalid input format. Expected array of allergies",
+      });
       return;
     }
 
-    const result = await Allergy.updateOne(
-      { name: name },
-      { $inc: { count: 1 } }
+    // Validate categories
+    const invalidCategories = allergiesData.filter(
+      ({ category }) => !validCategories.includes(category)
     );
 
-    if (result.modifiedCount > 0) {
-      res.status(200).json({ msg: "Count updated successfully" });
-    } else {
-      res.status(400).json({ msg: "Allergy not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ 
-      msg: "Server error",
-      error: error instanceof Error ? error.message : "Unknown error" 
-    });
-  }
-};
-
-// Decrement allergy count
-const allergyCountDec = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { name } = req.body;
-    
-    if (!name) {
-      res.status(400).json({ msg: "Name is required" });
+    if (invalidCategories.length > 0) {
+      res.status(400).json({
+        success: false,
+        msg: `Invalid categories found: ${invalidCategories
+          .map((a) => a.category)
+          .join(", ")}. Valid categories are: ${validCategories.join(", ")}`,
+      });
       return;
     }
 
-    const result = await Allergy.updateOne(
-      { name: name },
-      { $inc: { count: -1 } }
+    const savedAllergies = await Promise.all(
+      allergiesData.map(async ({ name, category }) => {
+        if (!name || !category) {
+          throw new Error("Name and category are required for each allergy");
+        }
+
+        // Convert name to lowercase for consistent comparison
+        const lowerName = name.toLowerCase().trim();
+
+        // Try to find existing allergy with case-insensitive search
+        const existingAllergy = await Allergy.findOne({
+          name: { $regex: new RegExp(`^${lowerName}$`, "i") },
+          category,
+        });
+
+        if (existingAllergy) {
+          // Increment count if allergy exists
+          existingAllergy.count += 1;
+          await existingAllergy.save();
+          return existingAllergy;
+        } else {
+          // Create new allergy if it doesn't exist, starting with count 1
+          const allergy = await Allergy.create({
+            name: lowerName,
+            category,
+            count: 1,
+          });
+          return allergy;
+        }
+      })
     );
 
-    if (result.modifiedCount > 0) {
-      res.status(200).json({ msg: "Count updated successfully" });
-    } else {
-      res.status(400).json({ msg: "Allergy not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ 
-      msg: "Server error",
-      error: error instanceof Error ? error.message : "Unknown error" 
+    res.status(201).json({
+      success: true,
+      msg: "Allergies processed successfully",
+      allergies: savedAllergies,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      msg: error?.message || "Error processing allergies",
     });
   }
-};
-
-// Get top allergies
-const getTopAllergies = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const topAllergies = await Allergy.find()
-      .sort({ count: -1 })
-      .limit(5);
-    res.status(200).json({ allergies: topAllergies });
-  } catch (error) {
-    res.status(500).json({ 
-      msg: "Server error",
-      error: error instanceof Error ? error.message : "Unknown error" 
-    });
-  }
-};
-
-export default {
-  createAllergy,
-  deleteAllergy,
-  allergyCountInc,
-  allergyCountDec,
-  getTopAllergies,
 };
