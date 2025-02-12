@@ -3,7 +3,8 @@ import { Calendar, Download } from "lucide-react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { Allergy } from "../models/interface/IAllergy.tsx";
 import AllergiesList from "../components/AllergiesList.tsx";
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
+//import { MenuIcon } from "lucide-react";
 
 interface DayMenu {
   day: string;
@@ -29,6 +30,27 @@ const Dashboard: React.FC = () => {
     fetchAllergies();
   }, []);
 
+  const groupedAllergies = allergies.reduce((acc, allergy) => {
+    if (!acc[allergy.category]) {
+      acc[allergy.category] = new Map();
+    }
+
+    // If allergy already exists, add to its count, otherwise create new entry
+    const existingCount = acc[allergy.category].get(
+      allergy.name.toLowerCase()
+    ) || {
+      name: allergy.name,
+      count: 0,
+    };
+
+    acc[allergy.category].set(allergy.name.toLowerCase(), {
+      name: allergy.name,
+      count: existingCount.count + allergy.count,
+    });
+
+    return acc;
+  }, {} as Record<string, Map<string, { name: string; count: number }>>);
+
   const fetchAllergies = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -36,7 +58,7 @@ const Dashboard: React.FC = () => {
         navigate("/signin");
         return;
       }
-  
+
       const response = await fetch(
         "http://localhost:3000/api/allergy/allergies",
         {
@@ -45,13 +67,13 @@ const Dashboard: React.FC = () => {
           },
         }
       );
-  
+
       if (response.status === 403) {
         localStorage.removeItem("token");
         navigate("/signin");
         return;
       }
-  
+
       if (!response.ok) {
         throw new Error("Failed to fetch allergies");
       }
@@ -69,7 +91,7 @@ const Dashboard: React.FC = () => {
         navigate("/signin");
         return;
       }
-  
+
       const response = await fetch(
         "http://localhost:3000/api/menu?date=" + new Date().toISOString(),
         {
@@ -78,17 +100,17 @@ const Dashboard: React.FC = () => {
           },
         }
       );
-  
+
       if (response.status === 403) {
         localStorage.removeItem("token");
         navigate("/signin");
         return;
       }
-  
+
       if (!response.ok) {
         throw new Error("Failed to fetch menu");
       }
-  
+
       const responseData = await response.json();
       if (responseData.success && responseData.data) {
         setMenu(responseData.data);
@@ -107,22 +129,22 @@ const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-  
+
       const token = localStorage.getItem("token");
       if (!token) {
         navigate("/signin");
         return;
       }
-  
+
       const today = new Date();
       const startDate = startOfWeek(today);
       const endDate = addDays(startDate, 6);
-  
+
       const requestBody = {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
       };
-  
+
       const response = await fetch("http://localhost:3000/api/menu/generate", {
         method: "POST",
         headers: {
@@ -131,18 +153,18 @@ const Dashboard: React.FC = () => {
         },
         body: JSON.stringify(requestBody),
       });
-  
+
       if (response.status === 403) {
         localStorage.removeItem("token");
         navigate("/signin");
         return;
       }
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to generate menu");
       }
-  
+
       const newMenu = await response.json();
       if (newMenu.success && newMenu.data) {
         setMenu(newMenu.data);
@@ -204,87 +226,175 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-6 flex">
-      {/* Main content */}
-      <div className="flex-grow mr-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Weekly Menu Dashboard</h1>
-          <div className="space-x-4">
-            <button
-              onClick={handleGenerateClick}
-              disabled={loading}
-              className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              {loading ? "Generating..." : "Generate New Menu"}
-            </button>
-            <button
-              onClick={exportToPDF}
-              disabled={!menu || loading}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export as PDF
-            </button>
+    <div className="p-6 flex-1 overflow-hidden">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-center mb-4 lg:mb-0">
+          Weekly Menu Dashboard
+        </h1>
+        {/* Action Buttons - Only visible on larger screens */}
+        <div className="hidden lg:flex space-x-4">
+          <button
+            onClick={handleGenerateClick}
+            disabled={loading}
+            className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            {loading ? "Generating..." : "Generate New Menu"}
+          </button>
+          <button
+            onClick={exportToPDF}
+            disabled={!menu || loading}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export as PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)]">
+        {/* Allergies - Full width on mobile, right sidebar on desktop */}
+        <div className="w-full lg:hidden mb-6">
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <h2 className="text-xl font-semibold mb-4">Allergies</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {allergies.length > 0 ? (
+                <>
+                  {/* First column */}
+                  <div className="space-y-4">
+                    {Object.entries(groupedAllergies)
+                      .slice(0, 4)
+                      .map(([category, allergyMap]) => (
+                        <div key={category} className="border-b pb-2">
+                          <h3 className="text-sm font-medium mb-1 capitalize">
+                            {category}
+                          </h3>
+                          <ul className="space-y-1">
+                            {Array.from(allergyMap.values()).map(
+                              (allergy, i) => (
+                                <li
+                                  key={i}
+                                  className="text-sm flex justify-between"
+                                >
+                                  <span className="capitalize">
+                                    {allergy.name}
+                                  </span>
+                                  <span className="text-gray-500 text-xs">
+                                    ({allergy.count})
+                                  </span>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Second column */}
+                  <div className="space-y-4">
+                    {Object.entries(groupedAllergies)
+                      .slice(4)
+                      .map(([category, allergyMap]) => (
+                        <div key={category} className="border-b pb-2">
+                          <h3 className="text-sm font-medium mb-1 capitalize">
+                            {category}
+                          </h3>
+                          <ul className="space-y-1">
+                            {Array.from(allergyMap.values()).map(
+                              (allergy, i) => (
+                                <li
+                                  key={i}
+                                  className="text-sm flex justify-between"
+                                >
+                                  <span className="capitalize">
+                                    {allergy.name}
+                                  </span>
+                                  <span className="text-gray-500 text-xs">
+                                    ({allergy.count})
+                                  </span>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-gray-500 text-center col-span-2">
+                  No allergies found
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md mb-6">
-            {error}
-          </div>
-        )}
+        {/* Weekly Menu - Center section */}
+        <div className="flex-1 overflow-y-auto pr-6">
+          {error && (
+            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
 
-        {menu ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {menu.weeklyMenu.map((day) => (
-              <div
-                key={day.day}
-                className="bg-white rounded-lg shadow-md overflow-hidden"
-              >
-                <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold">{day.day}</h2>
+          <div className="space-y-4">
+            {menu?.weeklyMenu.map((day) => (
+              <div key={day.day} className="bg-white rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold">{day.day}</h3>
                 </div>
-                <div className="p-4 space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">
-                      Breakfast
-                    </h3>
-                    <p className="mt-1">{day.dishes[0] || "Day Off"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">
-                      Lunch
-                    </h3>
-                    <p className="mt-1">{day.dishes[1] || "Day Off"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">
-                      Dinner
-                    </h3>
-                    <p className="mt-1">{day.dishes[2] || "Day Off"}</p>
-                  </div>
+                <div className="space-y-3">
+                  {["Breakfast", "Lunch", "Dinner"].map((meal, index) => (
+                    <div key={meal}>
+                      <span className="text-sm font-medium text-gray-500">
+                        {meal}:
+                      </span>
+                      <p className="mt-1">
+                        {day.dishes[index] || "No meal scheduled"}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500">
-              No menu available. Generate a new menu to get started.
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
 
-      {/* Allergies sidebar */}
-      <div className="w-80 flex-shrink-0">
-        <div className="bg-white rounded-lg shadow-md p-4 sticky top-6">
-          <AllergiesList allergies={allergies} />
+        {/* Allergies - Right sidebar on desktop only */}
+        <div className="hidden lg:block w-80 flex-shrink-0">
+          <div className="bg-white rounded-lg shadow-md p-4 sticky top-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+            {allergies.length > 0 ? (
+              <AllergiesList allergies={allergies} />
+            ) : (
+              <p className="text-gray-500 text-center">No allergies found</p>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Action Buttons - Only visible on mobile */}
+      <div className="fixed bottom-6 left-6 right-6 grid grid-cols-2 gap-4 lg:hidden">
+        <button
+          onClick={handleGenerateClick}
+          disabled={loading}
+          className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          <Calendar className="w-4 h-4 mr-2" />
+          {loading ? "..." : "Generate"}
+        </button>
+        <button
+          onClick={exportToPDF}
+          disabled={!menu || loading}
+          className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export PDF
+        </button>
+      </div>
+
+      {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black opacity-50"></div>
