@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, Download } from "lucide-react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { Allergy } from "../models/interface/IAllergy.tsx";
@@ -25,11 +25,6 @@ const Dashboard: React.FC = () => {
   const [allergies, setAllergies] = useState<Allergy[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchCurrentMenu();
-    fetchAllergies();
-  }, []);
-
   const groupedAllergies = allergies.reduce((acc, allergy) => {
     if (!acc[allergy.category]) {
       acc[allergy.category] = new Map();
@@ -51,7 +46,7 @@ const Dashboard: React.FC = () => {
     return acc;
   }, {} as Record<string, Map<string, { name: string; count: number }>>);
 
-  const fetchAllergies = async () => {
+  const fetchAllergies = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -82,9 +77,9 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error("Error fetching allergies:", error);
     }
-  };
+  }, [navigate]);
 
-  const fetchCurrentMenu = async () => {
+  const fetchCurrentMenu = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -123,7 +118,7 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   const generateNewMenu = async () => {
     try {
@@ -216,6 +211,11 @@ const Dashboard: React.FC = () => {
       console.error("Error exporting menu:", error);
     }
   };
+
+  useEffect(() => {
+    fetchCurrentMenu();
+    fetchAllergies();
+  }, [fetchCurrentMenu, fetchAllergies]);
 
   if (loading) {
     return (
