@@ -13,7 +13,7 @@ require("dotenv").config();
 DB;
 
 const app = express();
-const port: number = 3000;
+const port: number = Number(process.env.PORT) || 3000;
 
 app.use(
   cors({
