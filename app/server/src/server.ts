@@ -17,11 +17,10 @@ const port: number = 3000;
 
 app.use(
   cors({
-    origin: "http://localhost:3001", // replace with your frontend's origin
+    origin: "https://menu-scheduler-app.onrender.com",
     credentials: true,
   })
 );
-
 
 app.use(passport.initialize());
 
@@ -30,7 +29,7 @@ app.use(
     secret: process.env.COOKIEKEY,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === 'production' },
+    cookie: { secure: process.env.NODE_ENV === "production" },
   })
 );
 
@@ -40,6 +39,6 @@ app.use("/auth", authroute);
 app.use("/api/menu", menuRouter);
 app.use("/api/allergy", AllergyRoute);
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Example app listening on port ${port}`);
 });
