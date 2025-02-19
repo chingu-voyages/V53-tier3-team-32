@@ -9,10 +9,12 @@
     "allowJs": false,
     "checkJs": false,
     "isolatedModules": true,
-    "sourceMap": true,
+    "sourceMap": false, // Disables source maps to reduce memory usage
     "outDir": "dist",
     "typeRoots": ["./node_modules/@types", "./types"],
-
+    
+    "incremental": true, // Speeds up rebuilds
+    "skipLibCheck": true, // Skips type-checking dependencies
+    "noEmitOnError": false // Ensures compilation continues even with errors
   }
-
 }

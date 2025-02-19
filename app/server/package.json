@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npm run build && node dist/server.js",
     "dev": "node dist/server.js",
-    "build": "tsc",
+    "build": "NODE_OPTIONS='--max-old-space-size=1024' tsc",
     "watch": "nodemon src/server.ts"
   },
   "keywords": [],
