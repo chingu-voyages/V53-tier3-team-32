@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
+    "start": "node dist/server.js",
     "dev": "node dist/server.js",
     "build": "tsc",
     "watch": "nodemon src/server.ts"
