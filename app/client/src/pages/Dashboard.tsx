@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
       }
 
       const response = await fetch(
-        "http://localhost:3000/api/allergy/allergies",
+        "https://menu-scheduler-backend.onrender.com/api/allergy/allergies",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
       }
 
       const response = await fetch(
-        "http://localhost:3000/api/menu?date=" + new Date().toISOString(),
+        "https://menu-scheduler-backend.onrender.com/api/menu?date=" + new Date().toISOString(),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
         endDate: endDate.toISOString(),
       };
 
-      const response = await fetch("http://localhost:3000/api/menu/generate", {
+      const response = await fetch("https://menu-scheduler-backend.onrender.com/api/menu/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,7 +187,7 @@ const Dashboard: React.FC = () => {
   const exportToPDF = async () => {
     try {
       setError(null);
-      const response = await fetch("http://localhost:3000/api/menu/export", {
+      const response = await fetch("https://menu-scheduler-backend.onrender.com/api/menu/export", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

@@ -38,7 +38,7 @@ const SchedulesPage = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:3000/api/menu", {
+      const response = await fetch("https://menu-scheduler-backend.onrender.com/api/menu", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

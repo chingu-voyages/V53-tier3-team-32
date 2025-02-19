@@ -29,7 +29,7 @@ const AllergiesForm: React.FC<AllergiesFormProps> = ({ onAllergyAdded }) => {
     })).filter(allergy => allergy.name !== ""); // Only include non-empty allergies
   
     try {
-      const response = await fetch("http://localhost:3000/api/allergy/add-category", {
+      const response = await fetch("https://menu-scheduler-backend.onrender.com/api/allergy/add-category", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -20,7 +20,7 @@ const Signin = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3000/auth/signin", {
+      const response = await fetch("https://menu-scheduler-backend.onrender.com/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -45,11 +45,11 @@ const Signin = () => {
 
   // OAuth handlers
   const handleGoogleSignin = () => {
-    window.location.href = "http://localhost:3000/auth/google/";
+    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/google/";
   };
 
   const handleGithubSignin = () => {
-    window.location.href = "http://localhost:3000/auth/github/";
+    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/github/";
   };
 
   return (

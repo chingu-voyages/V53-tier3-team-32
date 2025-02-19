@@ -28,7 +28,7 @@ const Signup = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/auth/signup", {
+      const response = await fetch("https://menu-scheduler-backend.onrender.com/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -53,10 +53,10 @@ const Signup = () => {
 
   // google and github handlers
   const handleGoogleSignup = () => {
-    window.location.href = "http://localhost:3000/auth/google/";
+    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/google/";
   };
   const handleGithubSignup = () => {
-    window.location.href = "http://localhost:3000/auth/github/";
+    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/github/";
   };
 
   return (

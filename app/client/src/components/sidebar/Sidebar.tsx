@@ -45,7 +45,7 @@ const Sidebar = () => {
     // Clear user information from local storage
     localStorage.removeItem("user");
     // Redirect to the backend logout endpoint
-    window.location.href = "http://localhost:3000/auth/logout";
+    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/logout";
   };
 
   return (
@@ -134,7 +134,7 @@ const Sidebar = () => {
                 <span>Schedules</span>
               </Link>
             </li>
-            <li>
+            {/* <li>
               <button
                 onClick={handleDishManagementToggle}
                 className="flex items-center justify-between w-full p-3 rounded hover:bg-gray-700"
@@ -180,7 +180,7 @@ const Sidebar = () => {
                   </li>
                 </ul>
               </Collapse>
-            </li>
+            </li> */}
           </ul>
         </nav>
 
