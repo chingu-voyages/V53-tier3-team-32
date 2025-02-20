@@ -59,6 +59,7 @@ export const getMenuForWeek = async (
 
   try {
     const queryDate = new Date(date as string);
+    queryDate.setHours(0, 0, 0, 0); // Normalize the time
 
     // Ensure the date is valid
     if (isNaN(queryDate.getTime())) {
@@ -69,10 +70,16 @@ export const getMenuForWeek = async (
       return;
     }
 
+    // Log the query for debugging
+    console.log("Searching for menu with date:", queryDate);
+
     const menu = await Menu.findOne({
       startDate: { $lte: queryDate },
       endDate: { $gte: queryDate },
     });
+
+    // Log the found menu
+    console.log("Found menu:", menu);
 
     if (!menu) {
       res.status(404).json({
@@ -87,6 +94,7 @@ export const getMenuForWeek = async (
       data: menu,
     });
   } catch (err) {
+    console.error("Error in getMenuForWeek:", err);
     const error = err as Error;
     res.status(400).json({
       success: false,
@@ -95,10 +103,13 @@ export const getMenuForWeek = async (
   }
 };
 
-export const getAllMenus = async (req: Request, res: Response): Promise<void> => {
+export const getAllMenus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const menus = await Menu.find()
-      .select('startDate endDate')
+      .select("startDate endDate")
       .sort({ startDate: 1 });
 
     res.status(200).json({

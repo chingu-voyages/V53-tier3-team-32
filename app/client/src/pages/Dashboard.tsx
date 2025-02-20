@@ -134,25 +134,27 @@ const Dashboard: React.FC = () => {
         }
       );
 
+      // Log response for debugging
+      console.log("Response status:", response.status);
+      const responseData = await response.json();
+      console.log("Response data:", responseData);
+
       if (response.status === 403) {
         localStorage.removeItem("token");
         navigate("/signin");
         return;
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to fetch menu");
-      }
-
-      const responseData = await response.json();
+      // Set menu to null if no menu is found
       if (responseData.success && responseData.data) {
         setMenu(responseData.data);
         setError(null);
       } else {
-        setError(responseData.message || "No menu data available");
+        setMenu(null);
+        setError(responseData.message || "No menu found for this week");
       }
     } catch (error) {
+      setMenu(null);
       setError(error instanceof Error ? error.message : "Error fetching menu");
       console.error("Error fetching menu:", error);
     } finally {
@@ -285,12 +287,22 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchAvailableWeeks();
-    fetchCurrentMenu();
-    fetchAllergies();
+    setLoading(true);
+    Promise.all([
+      fetchAvailableWeeks(),
+      fetchCurrentMenu(),
+      fetchAllergies(),
+    ]).finally(() => {
+      setLoading(false);
+    });
   }, [fetchAvailableWeeks, fetchCurrentMenu, fetchAllergies]);
 
   if (loading) {
+    // Add timeout to prevent infinite loading
+    setTimeout(() => {
+      setLoading(false);
+    }, 10000); // 10 seconds timeout
+
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
