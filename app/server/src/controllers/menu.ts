@@ -95,6 +95,24 @@ export const getMenuForWeek = async (
   }
 };
 
+export const getAllMenus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const menus = await Menu.find()
+      .select('startDate endDate')
+      .sort({ startDate: 1 });
+
+    res.status(200).json({
+      success: true,
+      menus,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error instanceof Error ? error.message : "An error occurred",
+    });
+  }
+};
+
 export const generateWeeklyMenu = async (
   req: Request,
   res: Response

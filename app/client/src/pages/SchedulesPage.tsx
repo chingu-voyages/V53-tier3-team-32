@@ -1,24 +1,95 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { addDays, startOfWeek } from "date-fns";
+import { addDays, startOfWeek, isBefore, isAfter, isSameDay } from "date-fns";
 
 const SchedulesPage = () => {
   const navigate = useNavigate();
-  const [startDate, setStartDate] = useState(startOfWeek(new Date()));
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [existingMenus, setExistingMenus] = useState<
+    { startDate: Date; endDate: Date }[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [weeklyMenu, setWeeklyMenu] = useState([
+    { day: "Sunday", dishes: ["", "", ""] },
     { day: "Monday", dishes: ["", "", ""] },
     { day: "Tuesday", dishes: ["", "", ""] },
     { day: "Wednesday", dishes: ["", "", ""] },
     { day: "Thursday", dishes: ["", "", ""] },
     { day: "Friday", dishes: ["", "", ""] },
     { day: "Saturday", dishes: ["", "", ""] },
-    { day: "Sunday", dishes: ["", "", ""] },
   ]);
 
   const mealTypes = ["Breakfast", "Lunch", "Dinner"];
+
+  // Fetch existing menus when component mounts
+  useEffect(() => {
+    const fetchExistingMenus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const response = await fetch(
+          "https://menu-scheduler-backend.onrender.com/api/menu/all",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const menus = data.menus.map((menu: any) => ({
+            startDate: new Date(menu.startDate),
+            endDate: new Date(menu.endDate),
+          }));
+          setExistingMenus(menus);
+
+          // Find the next available week
+          const today = new Date();
+          let nextAvailableStart = startOfWeek(today, { weekStartsOn: 0 }); // 0 = Sunday
+
+          while (isWeekTaken(nextAvailableStart)) {
+            nextAvailableStart = addDays(nextAvailableStart, 7);
+          }
+
+          setStartDate(nextAvailableStart);
+        }
+      } catch (error) {
+        console.error("Error fetching existing menus:", error);
+      }
+    };
+
+    fetchExistingMenus();
+  }, []);
+
+  const isWeekTaken = (date: Date): boolean => {
+    const weekEnd = addDays(date, 6);
+    return existingMenus.some(
+      (menu) =>
+        (isSameDay(date, menu.startDate) || isAfter(date, menu.startDate)) &&
+        (isSameDay(date, menu.endDate) || isBefore(date, menu.endDate))
+    );
+  };
+
+  const filterAvailableDates = (date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Disable past dates
+    if (isBefore(date, today)) {
+      return false;
+    }
+
+    // Disable dates that fall within existing menu weeks
+    if (isWeekTaken(startOfWeek(date, { weekStartsOn: 0 }))) {
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +102,11 @@ const SchedulesPage = () => {
       return;
     }
 
+    if (!startDate) {
+      setError("Please select a start date");
+      return;
+    }
+
     const payload = {
       startDate,
       endDate: addDays(startDate, 6),
@@ -38,14 +114,17 @@ const SchedulesPage = () => {
     };
 
     try {
-      const response = await fetch("https://menu-scheduler-backend.onrender.com/api/menu", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        "https://menu-scheduler-backend.onrender.com/api/menu",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
 
@@ -88,13 +167,17 @@ const SchedulesPage = () => {
           >
             <div className="mb-6">
               <label className="block mb-2 text-sm font-medium text-gray-700">
-                Select Week Starting From:
+                Week Starting From:
               </label>
               <DatePicker
                 selected={startDate}
                 onChange={(date) => date && setStartDate(date)}
+                filterDate={filterAvailableDates}
                 minDate={new Date()}
                 className="border border-gray-300 rounded-md px-3 py-2 w-full md:w-auto"
+                placeholderText="Select a start date"
+                dateFormat="MMMM d, yyyy"
+                showDisabledMonthNavigation
               />
             </div>
 
