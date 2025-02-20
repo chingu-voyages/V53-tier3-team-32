@@ -87,8 +87,12 @@ const Dashboard: React.FC = () => {
         return;
       }
 
+      // Format the date to ISO string but trim the time portion since we only need the date
+      const today = new Date();
+      const formattedDate = today.toISOString().split("T")[0];
+
       const response = await fetch(
-        "https://menu-scheduler-backend.onrender.com/api/menu?date=" + new Date().toISOString(),
+        `https://menu-scheduler-backend.onrender.com/api/menu?date=${formattedDate}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -103,10 +107,13 @@ const Dashboard: React.FC = () => {
       }
 
       if (!response.ok) {
-        throw new Error("Failed to fetch menu");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch menu");
       }
 
+      console.log('Response status:', response.status);
       const responseData = await response.json();
+      console.log('Response data:', responseData);
       if (responseData.success && responseData.data) {
         setMenu(responseData.data);
       } else {
@@ -140,14 +147,17 @@ const Dashboard: React.FC = () => {
         endDate: endDate.toISOString(),
       };
 
-      const response = await fetch("https://menu-scheduler-backend.onrender.com/api/menu/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await fetch(
+        "https://menu-scheduler-backend.onrender.com/api/menu/generate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       if (response.status === 403) {
         localStorage.removeItem("token");
@@ -187,11 +197,14 @@ const Dashboard: React.FC = () => {
   const exportToPDF = async () => {
     try {
       setError(null);
-      const response = await fetch("https://menu-scheduler-backend.onrender.com/api/menu/export", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await fetch(
+        "https://menu-scheduler-backend.onrender.com/api/menu/export",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to export menu");

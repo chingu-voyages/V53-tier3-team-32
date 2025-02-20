@@ -59,6 +59,16 @@ export const getMenuForWeek = async (
 
   try {
     const queryDate = new Date(date as string);
+
+    // Ensure the date is valid
+    if (isNaN(queryDate.getTime())) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid date format",
+      });
+      return;
+    }
+
     const menu = await Menu.findOne({
       startDate: { $lte: queryDate },
       endDate: { $gte: queryDate },
