@@ -22,7 +22,7 @@ authroute.get("/logout", (req: Request, res: Response) => {
       return res.status(500).json({ message: "Logout failed" });
     }
     req.session.destroy(() => {
-      res.redirect("http://localhost:3001/signin");
+      res.redirect("https://menu-scheduling-app.onrender.com/signin");
     });
   });
 });
