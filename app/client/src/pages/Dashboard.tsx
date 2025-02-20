@@ -3,8 +3,9 @@ import { Calendar, Download } from "lucide-react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { Allergy } from "../models/interface/IAllergy.tsx";
 import AllergiesList from "../components/AllergiesList.tsx";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
-//import { MenuIcon } from "lucide-react";
 
 interface DayMenu {
   day: string;
@@ -18,12 +19,16 @@ interface Menu {
 }
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [menu, setMenu] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [allergies, setAllergies] = useState<Allergy[]>([]);
-  const navigate = useNavigate();
+  const [availableWeeks, setAvailableWeeks] = useState<
+    { startDate: Date; endDate: Date }[]
+  >([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const groupedAllergies = allergies.reduce((acc, allergy) => {
     if (!acc[allergy.category]) {
@@ -79,6 +84,37 @@ const Dashboard: React.FC = () => {
     }
   }, [navigate]);
 
+  const fetchAvailableWeeks = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/signin");
+        return;
+      }
+
+      const response = await fetch(
+        "https://menu-scheduler-backend.onrender.com/api/menu/all",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableWeeks(
+          data.menus.map((menu: any) => ({
+            startDate: new Date(menu.startDate),
+            endDate: new Date(menu.endDate),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching available weeks:", error);
+    }
+  }, [navigate]);
+
   const fetchCurrentMenu = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -87,9 +123,7 @@ const Dashboard: React.FC = () => {
         return;
       }
 
-      // Format the date to ISO string but trim the time portion since we only need the date
-      const today = new Date();
-      const formattedDate = today.toISOString().split("T")[0];
+      const formattedDate = selectedDate.toISOString().split("T")[0];
 
       const response = await fetch(
         `https://menu-scheduler-backend.onrender.com/api/menu?date=${formattedDate}`,
@@ -111,11 +145,10 @@ const Dashboard: React.FC = () => {
         throw new Error(errorData.message || "Failed to fetch menu");
       }
 
-      console.log('Response status:', response.status);
       const responseData = await response.json();
-      console.log('Response data:', responseData);
       if (responseData.success && responseData.data) {
         setMenu(responseData.data);
+        setError(null);
       } else {
         setError(responseData.message || "No menu data available");
       }
@@ -125,7 +158,7 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, selectedDate]);
 
   const generateNewMenu = async () => {
     try {
@@ -225,10 +258,37 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const WeekSelector = () => {
+    const filterAvailableDates = (date: Date) => {
+      return availableWeeks.some(
+        (week) =>
+          date >= new Date(week.startDate) && date <= new Date(week.endDate)
+      );
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 text-center">
+        <h3 className="text-xl font-semibold mb-4">
+          No menu found for this week
+        </h3>
+        <p className="mb-4">Select another week to view its menu:</p>
+        <DatePicker
+          selected={selectedDate}
+          onChange={(date) => date && setSelectedDate(date)}
+          filterDate={filterAvailableDates}
+          className="border border-gray-300 rounded-md px-3 py-2 w-full md:w-auto"
+          placeholderText="Select a date"
+          dateFormat="MMMM d, yyyy"
+        />
+      </div>
+    );
+  };
+
   useEffect(() => {
+    fetchAvailableWeeks();
     fetchCurrentMenu();
     fetchAllergies();
-  }, [fetchCurrentMenu, fetchAllergies]);
+  }, [fetchAvailableWeeks, fetchCurrentMenu, fetchAllergies]);
 
   if (loading) {
     return (
@@ -346,33 +406,38 @@ const Dashboard: React.FC = () => {
 
         {/* Weekly Menu - Center section */}
         <div className="flex-1 overflow-y-auto pr-6">
-          {error && (
+          {error === "No menu found for this week" ? (
+            <WeekSelector />
+          ) : error ? (
             <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               {error}
             </div>
+          ) : (
+            <div className="space-y-4">
+              {menu?.weeklyMenu.map((day) => (
+                <div
+                  key={day.day}
+                  className="bg-white rounded-lg shadow-md p-4"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold">{day.day}</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {["Breakfast", "Lunch", "Dinner"].map((meal, index) => (
+                      <div key={meal}>
+                        <span className="text-sm font-medium text-gray-500">
+                          {meal}:
+                        </span>
+                        <p className="mt-1">
+                          {day.dishes[index] || "No meal scheduled"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-
-          <div className="space-y-4">
-            {menu?.weeklyMenu.map((day) => (
-              <div key={day.day} className="bg-white rounded-lg shadow-md p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold">{day.day}</h3>
-                </div>
-                <div className="space-y-3">
-                  {["Breakfast", "Lunch", "Dinner"].map((meal, index) => (
-                    <div key={meal}>
-                      <span className="text-sm font-medium text-gray-500">
-                        {meal}:
-                      </span>
-                      <p className="mt-1">
-                        {day.dishes[index] || "No meal scheduled"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Allergies - Right sidebar on desktop only */}
