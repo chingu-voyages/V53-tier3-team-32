@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createWeeklyMenu,
+  getAllMenus,
   getMenuForWeek,
   generateWeeklyMenu,
   exportMenuAsPDF,
