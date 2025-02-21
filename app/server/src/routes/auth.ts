@@ -13,24 +13,6 @@ export const authroute = Router();
 authroute.post("/signup", asyncHandler(controller.createUser));
 authroute.post("/signin", asyncHandler(controller.signin));
 
-// Protected routes
-authroute.use(authenticateJWT);
-
-authroute.get("/logout", (req: Request, res: Response) => {
-  req.logout(function (err) {
-    if (err) {
-      return res.status(500).json({ message: "Logout failed" });
-    }
-    if (req.session) {
-      req.session.destroy(() => {
-        res.redirect("https://menu-scheduling-app.onrender.com/signin");
-      });
-    } else {
-      res.redirect("https://menu-scheduling-app.onrender.com/signin");
-    }
-  });
-});
-
 authroute.get(
   "/github/",
   passport.authenticate("github", { scope: ["profile", "email"] })
@@ -58,3 +40,21 @@ authroute.get(
     res.redirect("/");
   }
 );
+
+// Protected routes
+authroute.use(authenticateJWT);
+
+authroute.get("/logout", (req: Request, res: Response) => {
+  req.logout(function (err) {
+    if (err) {
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    if (req.session) {
+      req.session.destroy(() => {
+        res.redirect("https://menu-scheduling-app.onrender.com/signin");
+      });
+    } else {
+      res.redirect("https://menu-scheduling-app.onrender.com/signin");
+    }
+  });
+});
