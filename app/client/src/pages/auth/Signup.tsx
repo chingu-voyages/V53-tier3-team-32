@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleIcon from "@mui/icons-material/Google";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -12,6 +12,16 @@ const Signup = () => {
     confirmPassword: "",
   });
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      navigate("/");
+    }
+  }, [navigate]);
+
   // handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,22 +30,22 @@ const Signup = () => {
   // handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     // Validate that password === confirmPassword
     if (form.password !== form.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-  
+
     try {
       const response = await fetch("https://menu-scheduler-backend.onrender.com/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         // Store user information and token in local storage
         localStorage.setItem("user", JSON.stringify(data.user));

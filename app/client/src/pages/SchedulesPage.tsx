@@ -23,6 +23,16 @@ const SchedulesPage = () => {
 
   const mealTypes = ["Breakfast", "Lunch", "Dinner"];
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      // Remove the token query parameter from the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // Fetch existing menus when component mounts
   useEffect(() => {
     const fetchExistingMenus = async () => {
