@@ -44,13 +44,16 @@ authroute.get(
 );
 authroute.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "https://menu-scheduling-app.onrender.com/signin" }),
+  passport.authenticate("google", { failureRedirect: "/signin" }),
   (req: Request, res: Response) => {
-    // Generate JWT for the authenticated user
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    
-    // Redirect to the front end with the token appended as a query parameter
-    res.redirect(`https://menu-scheduling-app.onrender.com/?token=${token}`);
+    if (req.user) {
+      const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      res.redirect(`https://menu-scheduling-app.onrender.com?token=${token}`);
+    } else {
+      res.redirect("/signin");
+    }
   }
 );
 
