@@ -9,10 +9,11 @@ import { asyncHandler } from "../lib/asyncHandler";
 
 export const authroute = Router();
 
-// Auth routes
+// Public auth routes
 authroute.post("/signup", asyncHandler(controller.createUser));
 authroute.post("/signin", asyncHandler(controller.signin));
 
+// OAuth routes (should be public)
 authroute.get(
   "/github/",
   passport.authenticate("github", { scope: ["profile", "email"] })
@@ -21,7 +22,7 @@ authroute.get(
   "/github/callback",
   passport.authenticate("github"),
   (req: Request, res: Response) => {
-    res.redirect("/");
+    res.redirect("https://menu-scheduling-app.onrender.com/");
   }
 );
 authroute.get(
@@ -37,11 +38,11 @@ authroute.get(
   "/google/callback",
   passport.authenticate("google"),
   (req: Request, res: Response) => {
-    res.redirect("/");
+    res.redirect("https://menu-scheduling-app.onrender.com/");
   }
 );
 
-// Protected routes
+// Now apply JWT middleware for protected routes
 authroute.use(authenticateJWT);
 
 authroute.get("/logout", (req: Request, res: Response) => {
