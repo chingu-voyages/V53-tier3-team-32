@@ -21,9 +21,13 @@ authroute.get("/logout", (req: Request, res: Response) => {
     if (err) {
       return res.status(500).json({ message: "Logout failed" });
     }
-    req.session.destroy(() => {
+    if (req.session) {
+      req.session.destroy(() => {
+        res.redirect("https://menu-scheduling-app.onrender.com/signin");
+      });
+    } else {
       res.redirect("https://menu-scheduling-app.onrender.com/signin");
-    });
+    }
   });
 });
 
