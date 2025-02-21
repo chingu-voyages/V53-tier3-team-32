@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
         navigate("/signin");
         return;
       }
-
+  
       const response = await fetch(
         "https://menu-scheduler-backend.onrender.com/api/menu/all",
         {
@@ -100,7 +100,7 @@ const Dashboard: React.FC = () => {
           },
         }
       );
-
+  
       if (response.ok) {
         const data = await response.json();
         setAvailableWeeks(
@@ -114,7 +114,7 @@ const Dashboard: React.FC = () => {
       console.error("Error fetching available weeks:", error);
     }
   }, [navigate]);
-
+  
   const fetchCurrentMenu = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -122,9 +122,9 @@ const Dashboard: React.FC = () => {
         navigate("/signin");
         return;
       }
-
+  
       const formattedDate = selectedDate.toISOString().split("T")[0];
-
+  
       const response = await fetch(
         `https://menu-scheduler-backend.onrender.com/api/menu?date=${formattedDate}`,
         {
@@ -133,18 +133,18 @@ const Dashboard: React.FC = () => {
           },
         }
       );
-
+  
       // Log response for debugging
       console.log("Response status:", response.status);
       const responseData = await response.json();
       console.log("Response data:", responseData);
-
+  
       if (response.status === 403) {
         localStorage.removeItem("token");
         navigate("/signin");
         return;
       }
-
+  
       // Set menu to null if no menu is found
       if (responseData.success && responseData.data) {
         setMenu(responseData.data);

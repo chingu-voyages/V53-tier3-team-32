@@ -20,22 +20,22 @@ const Signup = () => {
   // handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    //validate that password === confirmPassword
+  
+    // Validate that password === confirmPassword
     if (form.password !== form.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-
+  
     try {
       const response = await fetch("https://menu-scheduler-backend.onrender.com/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         // Store user information and token in local storage
         localStorage.setItem("user", JSON.stringify(data.user));
