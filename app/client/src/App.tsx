@@ -10,6 +10,7 @@ import SchedulesPage from "./pages/SchedulesPage.tsx";
 import DishAssignmentPage from "./pages/DishAssignmentPage.tsx";
 import AllergenRestrictionsPage from "./pages/AllergenRestrictionsPage.tsx";
 import OrderPreparationsPage from "./pages/OrderPreparationsPage.tsx";
+import AuthCallback from "./components/AuthCallback.tsx";
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         {/* Public routes without Sidebar */}
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Private or main routes wrapped with Layout */}
         <Route

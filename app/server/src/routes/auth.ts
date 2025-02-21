@@ -27,7 +27,9 @@ authroute.get(
       const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
-      res.redirect(`https://menu-scheduling-app.onrender.com?token=${token}`);
+      res.redirect(
+        `https://menu-scheduling-app.onrender.com/auth/callback?token=${token}`
+      );
     } else {
       res.redirect("/signin");
     }
@@ -50,7 +52,9 @@ authroute.get(
       const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
-      res.redirect(`https://menu-scheduling-app.onrender.com?token=${token}`);
+      res.redirect(
+        `https://menu-scheduling-app.onrender.com/auth/callback?token=${token}`
+      );
     } else {
       res.redirect("/signin");
     }
