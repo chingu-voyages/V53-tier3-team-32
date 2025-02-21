@@ -17,7 +17,7 @@ const port: number = Number(process.env.PORT) || 3000;
 
 app.use(
   cors({
-    origin: "https://v53-tier3-team-32.onrender.com",
+    origin: "https://menu-scheduling-app.onrender.com/",
     credentials: true,
   })
 );
