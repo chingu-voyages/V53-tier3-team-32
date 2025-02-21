@@ -1,5 +1,10 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 import Signin from "./pages/auth/Signin.tsx";
 import Signup from "./pages/auth/Signup.tsx";
 import Layout from "./components/sidebar/Layout.tsx";
@@ -12,6 +17,17 @@ import AllergenRestrictionsPage from "./pages/AllergenRestrictionsPage.tsx";
 import OrderPreparationsPage from "./pages/OrderPreparationsPage.tsx";
 
 const App = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      navigate("/");
+    }
+  }, [navigate]);
+
   return (
     <Router>
       <Routes>

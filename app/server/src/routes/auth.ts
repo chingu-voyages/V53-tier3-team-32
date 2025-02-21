@@ -6,6 +6,7 @@ require("../lib/Google.auth");
 import { Request, Response } from "express";
 import { authenticateJWT } from "../middleware";
 import { asyncHandler } from "../lib/asyncHandler";
+import jwt from "jsonwebtoken";
 
 export const authroute = Router();
 
@@ -20,9 +21,12 @@ authroute.get(
 );
 authroute.get(
   "/github/callback",
-  passport.authenticate("github"),
+  passport.authenticate("github", { failureRedirect: "/signin" }),
   (req: Request, res: Response) => {
-    res.redirect("https://menu-scheduling-app.onrender.com/");
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    res.redirect(`https://menu-scheduling-app.onrender.com?token=${token}`);
   }
 );
 authroute.get(
@@ -36,9 +40,12 @@ authroute.get(
 );
 authroute.get(
   "/google/callback",
-  passport.authenticate("google"),
+  passport.authenticate("google", { failureRedirect: "/signin" }),
   (req: Request, res: Response) => {
-    res.redirect("https://menu-scheduling-app.onrender.com/");
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    res.redirect(`https://menu-scheduling-app.onrender.com?token=${token}`);
   }
 );
 
