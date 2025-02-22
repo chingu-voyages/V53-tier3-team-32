@@ -21,7 +21,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "serve": "node_modules/.bin/serve -s build -l 3000",
+    "serve": "node_modules/.bin/serve -s build -l 3001",
     "prod": "npm run build && npm run serve",
     "test": "craco test",
     "eject": "react-scripts eject"
