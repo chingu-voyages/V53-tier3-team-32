@@ -11,46 +11,51 @@ import IUser from "../models/interface/IUser";
 
 export const authroute = Router();
 
-// Public auth routes
-authroute.post("/signup", asyncHandler(controller.createUser));
-authroute.post("/signin", asyncHandler(controller.signin));
-
-// Helper function to generate JWT token
-const generateToken = (user: IUser) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-    expiresIn: "7d",
-  });
-};
-
-// Google Auth Routes
-authroute.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+// Add OAuth routes
+authroute.get("/google", passport.authenticate("google", { session: false }));
 
 authroute.get(
   "/google/callback",
-  passport.authenticate("google", { session: false }),
-  (req: Request, res: Response) => {
-    const token = generateToken(req.user as IUser);
-    res.redirect(`https://menu-scheduling-app.onrender.com/?token=${token}`);
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/signin",
+  }),
+  (req, res) => {
+    const user = req.user as IUser;
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+      expiresIn: "1h",
+    });
+    res.redirect(
+      `https://menu-scheduling-app.onrender.com/signin?token=${token}`
+    );
   }
 );
 
-// GitHub Auth Routes
 authroute.get(
   "/github",
-  passport.authenticate("github", { scope: ["user:email"] })
+  passport.authenticate("github", { session: false, scope: ["user:email"] })
 );
 
 authroute.get(
   "/github/callback",
-  passport.authenticate("github", { session: false }),
-  (req: Request, res: Response) => {
-    const token = generateToken(req.user as IUser);
-    res.redirect(`https://menu-scheduling-app.onrender.com/?token=${token}`);
+  passport.authenticate("github", {
+    session: false,
+    failureRedirect: "/signin",
+  }),
+  (req, res) => {
+    const user = req.user as IUser;
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+      expiresIn: "1h",
+    });
+    res.redirect(
+      `https://menu-scheduling-app.onrender.com/signin?token=${token}`
+    );
   }
 );
+
+// Public auth routes
+authroute.post("/signup", asyncHandler(controller.createUser));
+authroute.post("/signin", asyncHandler(controller.signin));
 
 // Now apply JWT middleware for protected routes
 authroute.use(authenticateJWT);

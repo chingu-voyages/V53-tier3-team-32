@@ -38,11 +38,14 @@ const Signup = () => {
     }
 
     try {
-      const response = await fetch("https://menu-scheduler-backend.onrender.com/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const response = await fetch(
+        "https://menu-scheduler-backend.onrender.com/auth/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
 
       const data = await response.json();
 
@@ -63,10 +66,12 @@ const Signup = () => {
 
   // google and github handlers
   const handleGoogleSignup = () => {
-    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/google/";
+    window.location.href =
+      "https://menu-scheduler-backend.onrender.com/auth/google/";
   };
   const handleGithubSignup = () => {
-    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/github/";
+    window.location.href =
+      "https://menu-scheduler-backend.onrender.com/auth/github/";
   };
 
   return (

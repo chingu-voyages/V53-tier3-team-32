@@ -1,8 +1,8 @@
 require("dotenv").config();
-import passport from 'passport';
-import { Strategy as GoogleStrategy, Profile as GoogleProfile, VerifyCallback } from 'passport-google-oauth20';
-import { User } from '../models/schemas/User';
-import jwt from 'jsonwebtoken';
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { User } from "../models/schemas/User";
+import { IUser } from "../models/interface/IUser";
 
 passport.use(
   new GoogleStrategy(
@@ -10,34 +10,26 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL: "https://menu-scheduler-backend.onrender.com/auth/google/callback",
+      scope: ["profile", "email"],
     },
-    async (
-      accessToken: string,
-      refreshToken: string,
-      profile: GoogleProfile,
-      done: VerifyCallback
-    ) => {
+    async (accessToken, refreshToken, profile, done) => {
       try {
-        const existingUser = await User.findOne({ googleid: profile.id });
-
-        if (existingUser) {
-          return done(null, existingUser);
+        let user = await User.findOne({ googleid: profile.id });
+        
+        if (!user) {
+          const email = profile.emails?.[0].value;
+          const username = profile.displayName || email?.split("@")[0] || `user${profile.id}`;
+          
+          user = new User({
+            googleid: profile.id,
+            email: email!,
+            username,
+            role: "worker",
+          });
+          
+          await user.save();
         }
-
-        const email = profile.emails?.[0]?.value;
-        const username = profile.displayName || email?.split('@')[0];
-
-        if (!email || !username) {
-          return done(new Error('Email and username are required'));
-        }
-
-        const newUser = await User.create({
-          googleid: profile.id,
-          email,
-          username,
-        });
-
-        return done(null, newUser);
+        return done(null, user);
       } catch (error) {
         return done(error as Error);
       }

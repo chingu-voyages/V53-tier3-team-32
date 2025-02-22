@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import GoogleIcon from '@mui/icons-material/Google';
-import GitHubIcon from '@mui/icons-material/GitHub';
+import GoogleIcon from "@mui/icons-material/Google";
+import GitHubIcon from "@mui/icons-material/GitHub";
 
 const Signin = () => {
   const navigate = useNavigate();
@@ -30,11 +30,14 @@ const Signin = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("https://menu-scheduler-backend.onrender.com/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const response = await fetch(
+        "https://menu-scheduler-backend.onrender.com/auth/signin",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
 
       const data = await response.json();
 
@@ -55,11 +58,13 @@ const Signin = () => {
 
   // OAuth handlers
   const handleGoogleSignin = () => {
-    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/google/";
+    window.location.href =
+      "https://menu-scheduler-backend.onrender.com/auth/google/";
   };
 
   const handleGithubSignin = () => {
-    window.location.href = "https://menu-scheduler-backend.onrender.com/auth/github/";
+    window.location.href =
+      "https://menu-scheduler-backend.onrender.com/auth/github/";
   };
 
   return (
@@ -71,14 +76,14 @@ const Signin = () => {
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4">
         <h2 className="text-2xl font-semibold text-center mb-4">Sign In</h2>
         <div className="text-center mt-6">
-          <button 
+          <button
             onClick={handleGoogleSignin}
             className="w-full flex items-center justify-center bg-white border p-3 rounded mb-4"
           >
             <GoogleIcon className="h-5 w-5 mr-2" />
             Signin with Google
           </button>
-          <button 
+          <button
             onClick={handleGithubSignin}
             className="w-full flex items-center justify-center bg-white border p-3 rounded mb-4"
           >
@@ -90,7 +95,7 @@ const Signin = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            name="identifier" 
+            name="identifier"
             value={form.identifier}
             onChange={handleChange}
             placeholder="Username or Email"

@@ -7,12 +7,12 @@ export enum UserRole {
 
 export default interface IUser {
   _id: ObjectId;
-  googleid: string;
-  githubid: string;
+  googleid?: string;
+  githubid?: string;
   username: string;
   email: string;
   role: UserRole;
   created_at: Date;
   updated_at: Date;
-  password: string;
+  password?: string;
 }
