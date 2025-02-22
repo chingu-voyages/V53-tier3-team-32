@@ -13,10 +13,52 @@ const Signin = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
+
     if (token) {
-      localStorage.setItem("token", token);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      navigate("/");
+      try {
+        // Verify token structure before storing
+        if (
+          !token.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]*$/)
+        ) {
+          throw new Error("Invalid token format");
+        }
+
+        localStorage.setItem("token", token);
+
+        // Clear query parameters without reloading
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        // Verify token validity before redirect
+        const verifyToken = async () => {
+          try {
+            const response = await fetch(
+              "https://menu-scheduler-backend.onrender.com/auth/verify",
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (!response.ok) throw new Error("Invalid token");
+            navigate("/");
+          } catch (error) {
+            console.error("Token verification failed:", error);
+            localStorage.removeItem("token");
+            navigate("/signin");
+          }
+        };
+
+        verifyToken();
+      } catch (error) {
+        console.error("Token processing error:", error);
+        localStorage.removeItem("token");
+        navigate("/signin");
+      }
     }
   }, [navigate]);
 

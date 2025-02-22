@@ -25,9 +25,12 @@ authroute.get(
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: "1h",
     });
-    res.redirect(
-      `https://menu-scheduling-app.onrender.com/signin?token=${token}`
-    );
+
+    // Encode the token and frontend URL
+    const encodedToken = encodeURIComponent(token);
+    const frontendUrl = `https://menu-scheduling-app.onrender.com/signin?token=${encodedToken}`;
+
+    res.redirect(frontendUrl);
   }
 );
 
@@ -51,6 +54,15 @@ authroute.get(
       `https://menu-scheduling-app.onrender.com/signin?token=${token}`
     );
   }
+);
+
+// routes/auth.ts
+authroute.get(
+  "/verify",
+  authenticateJWT,
+  asyncHandler(async (req: Request, res: Response) => {
+    res.status(200).json({ valid: true, user: req.user });
+  })
 );
 
 // Public auth routes
