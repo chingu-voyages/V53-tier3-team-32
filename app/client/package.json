@@ -18,8 +18,9 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
+    "start": "node server.js",
+    "build": "react-scripts build",
+    "serve": "react-scripts build && serve -s build -l 3000",
     "test": "craco test",
     "eject": "react-scripts eject"
   },
