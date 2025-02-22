@@ -3,10 +3,10 @@ import passport from "passport";
 import {
   Strategy as GoogleStrategy,
   VerifyCallback,
+  Profile,
 } from "passport-google-oauth20";
-import { User } from "../models/schemas/User";
+import { User } from '../models/schemas/User';
 import IUser from "../models/interface/IUser";
-import { Profile } from "passport-google-oauth20";
 
 passport.use(
   new GoogleStrategy(

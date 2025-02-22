@@ -1,3 +1,4 @@
+// models/schemas/User.ts
 import mongoose, { Model, Schema } from "mongoose";
 import IUser, { UserRole } from "../interface/IUser";
 import DB from "../../lib/DB";
