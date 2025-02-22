@@ -7,6 +7,7 @@ import { Request, Response } from "express";
 import { authenticateJWT } from "../middleware";
 import { asyncHandler } from "../lib/asyncHandler";
 import jwt from "jsonwebtoken";
+import IUser from "../models/interface/IUser";
 
 export const authroute = Router();
 
@@ -15,7 +16,7 @@ authroute.post("/signup", asyncHandler(controller.createUser));
 authroute.post("/signin", asyncHandler(controller.signin));
 
 // Helper function to generate JWT token
-const generateToken = (user: any) => {
+const generateToken = (user: IUser) => {
   return jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
     expiresIn: "7d",
   });
@@ -31,7 +32,7 @@ authroute.get(
   "/google/callback",
   passport.authenticate("google", { session: false }),
   (req: Request, res: Response) => {
-    const token = generateToken(req.user);
+    const token = generateToken(req.user as IUser);
     res.redirect(`https://menu-scheduling-app.onrender.com/?token=${token}`);
   }
 );
@@ -46,7 +47,7 @@ authroute.get(
   "/github/callback",
   passport.authenticate("github", { session: false }),
   (req: Request, res: Response) => {
-    const token = generateToken(req.user);
+    const token = generateToken(req.user as IUser);
     res.redirect(`https://menu-scheduling-app.onrender.com/?token=${token}`);
   }
 );

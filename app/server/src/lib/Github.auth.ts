@@ -1,7 +1,10 @@
 require("dotenv").config();
 import passport from 'passport';
-import { Strategy as GitHubStrategy } from 'passport-github2';
+import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github2';
 import { User } from '../models/schemas/User';
+
+// Define the done callback type
+type GitHubVerifyCallback = (error: any, user?: any, options?: any) => void;
 
 passport.use(
   new GitHubStrategy(
@@ -11,7 +14,12 @@ passport.use(
       callbackURL: "https://menu-scheduler-backend.onrender.com/auth/github/callback",
       scope: ['user:email'],
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (
+      accessToken: string,
+      refreshToken: string,
+      profile: GitHubProfile,
+      done: GitHubVerifyCallback
+    ) => {
       try {
         const existingUser = await User.findOne({ githubid: profile.id });
 
@@ -19,7 +27,6 @@ passport.use(
           return done(null, existingUser);
         }
 
-        // Create new user if doesn't exist
         const email = profile.emails?.[0]?.value;
         const username = profile.username || email?.split('@')[0];
 
@@ -40,6 +47,7 @@ passport.use(
     }
   )
 );
+
 
 passport.serializeUser((user: any, done: Function) => {
   done(null, user._id);

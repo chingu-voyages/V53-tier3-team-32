@@ -1,6 +1,6 @@
 require("dotenv").config();
 import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as GoogleStrategy, Profile as GoogleProfile, VerifyCallback } from 'passport-google-oauth20';
 import { User } from '../models/schemas/User';
 import jwt from 'jsonwebtoken';
 
@@ -11,7 +11,12 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL: "https://menu-scheduler-backend.onrender.com/auth/google/callback",
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (
+      accessToken: string,
+      refreshToken: string,
+      profile: GoogleProfile,
+      done: VerifyCallback
+    ) => {
       try {
         const existingUser = await User.findOne({ googleid: profile.id });
 
@@ -19,7 +24,6 @@ passport.use(
           return done(null, existingUser);
         }
 
-        // Create new user if doesn't exist
         const email = profile.emails?.[0]?.value;
         const username = profile.displayName || email?.split('@')[0];
 
