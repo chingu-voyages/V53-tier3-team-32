@@ -1,8 +1,12 @@
 require("dotenv").config();
 import passport from "passport";
-import { Strategy as GitHubStrategy } from "passport-github2";
-import { User } from "../models/schemas/User";
-import { IUser } from "../models/interface/IUser";
+import {
+  Strategy as GitHubStrategy,
+  Profile as GitHubProfile,
+} from "passport-github2";
+import User from "../models/schemas/User";
+import IUser from "../models/interface/IUser";
+import { VerifyCallback } from "passport-oauth2";
 
 passport.use(
   new GitHubStrategy(
@@ -13,7 +17,12 @@ passport.use(
         "https://menu-scheduler-backend.onrender.com/auth/github/callback",
       scope: ["user:email"],
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (
+      accessToken: string,
+      refreshToken: string,
+      profile: GitHubProfile,
+      done: VerifyCallback
+    ) => {
       try {
         let user = await User.findOne({ githubid: profile.id });
 

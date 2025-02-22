@@ -1,4 +1,4 @@
-import mongoose, { Model, Mongoose, Schema } from "mongoose";
+import mongoose, { Model, Schema } from "mongoose";
 import IUser, { UserRole } from "../interface/IUser";
 import DB from "../../lib/DB";
 
@@ -17,4 +17,4 @@ const UserSchema = new Schema<IUser>({
   updated_at: { type: Date, default: Date.now },
 });
 
-export const User: Model<IUser> = DB.model("User", UserSchema);
+export const User: Model<IUser> = DB.model<IUser>("User", UserSchema);
