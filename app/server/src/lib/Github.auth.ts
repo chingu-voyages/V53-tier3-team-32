@@ -1,43 +1,44 @@
 require("dotenv").config();
-import { User } from "../models/schemas/User";
-import passport from "passport";
-const GithubStrategy = require("passport-github").Strategy;
+import passport from 'passport';
+import { Strategy as GitHubStrategy } from 'passport-github2';
+import { User } from '../models/schemas/User';
 
 passport.use(
-  new GithubStrategy(
+  new GitHubStrategy(
     {
-      clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: "https://menu-scheduler-backend.onrender.com/auth/github/callback/",
+      clientID: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      callbackURL: "https://menu-scheduler-backend.onrender.com/auth/github/callback",
+      scope: ['user:email'],
     },
-    async function (
-      accessToken: String,
-      refreshToken: String,
-      profile: any,
-      done: Function,
-    ) {
+    async (accessToken, refreshToken, profile, done) => {
       try {
-        const currentUser = await User.findOne({ githubid: profile.id });
+        const existingUser = await User.findOne({ githubid: profile.id });
 
-        if (currentUser) {
-          console.log(currentUser + "has been found");
-          return done(null, currentUser);
+        if (existingUser) {
+          return done(null, existingUser);
+        }
+
+        // Create new user if doesn't exist
+        const email = profile.emails?.[0]?.value;
+        const username = profile.username || email?.split('@')[0];
+
+        if (!email || !username) {
+          return done(new Error('Email and username are required'));
         }
 
         const newUser = await User.create({
           githubid: profile.id,
-          email: profile.emails[0].value,
-          username: profile.username,
+          email,
+          username,
         });
 
-        console.log(newUser + "has been created");
-        done(null, newUser);
-      } catch (err) {
-        console.log(err);
-        done(err, null);
+        return done(null, newUser);
+      } catch (error) {
+        return done(error as Error);
       }
-    },
-  ),
+    }
+  )
 );
 
 passport.serializeUser((user: any, done: Function) => {

@@ -14,50 +14,40 @@ export const authroute = Router();
 authroute.post("/signup", asyncHandler(controller.createUser));
 authroute.post("/signin", asyncHandler(controller.signin));
 
-// OAuth routes (should be public)
+// Helper function to generate JWT token
+const generateToken = (user: any) => {
+  return jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+    expiresIn: "7d",
+  });
+};
+
+// Google Auth Routes
 authroute.get(
-  "/github/",
-  passport.authenticate("github", { scope: ["profile", "email"] })
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
-authroute.get(
-  "/github/callback",
-  passport.authenticate("github", { failureRedirect: "/signin" }),
-  (req: Request, res: Response) => {
-    if (req.user) {
-      const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
-      res.redirect(
-        `https://menu-scheduling-app.onrender.com/auth/callback?token=${token}`
-      );
-    } else {
-      res.redirect("/signin");
-    }
-  }
-);
-authroute.get(
-  "/google/",
-  passport.authenticate("google", {
-    scope: [
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/userinfo.email",
-    ],
-  })
-);
+
 authroute.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/signin" }),
+  passport.authenticate("google", { session: false }),
   (req: Request, res: Response) => {
-    if (req.user) {
-      const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
-      res.redirect(
-        `https://menu-scheduling-app.onrender.com/auth/callback?token=${token}`
-      );
-    } else {
-      res.redirect("/signin");
-    }
+    const token = generateToken(req.user);
+    res.redirect(`https://menu-scheduling-app.onrender.com/?token=${token}`);
+  }
+);
+
+// GitHub Auth Routes
+authroute.get(
+  "/github",
+  passport.authenticate("github", { scope: ["user:email"] })
+);
+
+authroute.get(
+  "/github/callback",
+  passport.authenticate("github", { session: false }),
+  (req: Request, res: Response) => {
+    const token = generateToken(req.user);
+    res.redirect(`https://menu-scheduling-app.onrender.com/?token=${token}`);
   }
 );
 
