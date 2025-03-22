@@ -12,9 +12,28 @@ const AllergiesList: React.FC<AllergiesListProps> = ({
   allergies,
   onDeleteAllergy,
 }) => {
-  // Group allergies as you already do...
+  // Implement the actual grouping logic instead of the placeholder
   const groupedAllergies = allergies.reduce((acc, allergy) => {
-    // Your existing reducer logic...
+    if (!acc[allergy.category]) {
+      acc[allergy.category] = new Map();
+    }
+
+    // Convert allergy name to lowercase for case-insensitive mapping
+    const lowerName = allergy.name.toLowerCase();
+
+    // If allergy already exists, update its count, otherwise create new entry
+    const existingAllergy = acc[allergy.category].get(lowerName) || {
+      name: allergy.name,
+      count: 0,
+      id: allergy._id,
+    };
+
+    acc[allergy.category].set(lowerName, {
+      name: allergy.name,
+      count: existingAllergy.count + allergy.count,
+      id: allergy._id,
+    });
+
     return acc;
   }, {} as Record<string, Map<string, { name: string; count: number; id: string }>>);
 
