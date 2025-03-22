@@ -47,6 +47,13 @@ const Signup = () => {
             );
 
             if (!response.ok) throw new Error("Invalid token");
+
+            // Extract user data and save it
+            const data = await response.json();
+            if (data.user) {
+              localStorage.setItem("user", JSON.stringify(data.user));
+            }
+
             navigate("/");
           } catch (error) {
             console.error("Token verification failed:", error);
