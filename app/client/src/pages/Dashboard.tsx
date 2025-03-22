@@ -94,6 +94,36 @@ const Dashboard: React.FC = () => {
     }
   }, [navigate]);
 
+  const deleteAllergy = async (allergyId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/signin");
+        return;
+      }
+
+      const response = await fetch(
+        `https://menu-scheduler-backend.onrender.com/api/allergy/delete/${allergyId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Refresh allergies after deletion
+        await fetchAllergies();
+      } else {
+        const data = await response.json();
+        console.error("Error deleting allergy:", data.msg);
+      }
+    } catch (error) {
+      console.error("Error deleting allergy:", error);
+    }
+  };
+
   const fetchAvailableWeeks = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -277,7 +307,6 @@ const Dashboard: React.FC = () => {
           date >= new Date(week.startDate) && date <= new Date(week.endDate)
       );
     };
-
 
     return (
       <div className="bg-white rounded-lg shadow-md p-6 text-center">
@@ -467,7 +496,10 @@ const Dashboard: React.FC = () => {
         <div className="hidden lg:block w-80 flex-shrink-0">
           <div className="bg-white rounded-lg shadow-md p-4 sticky top-6 max-h-[calc(100vh-140px)] overflow-y-auto">
             {allergies.length > 0 ? (
-              <AllergiesList allergies={allergies} />
+              <AllergiesList
+                allergies={allergies}
+                onDeleteAllergy={deleteAllergy}
+              />
             ) : (
               <p className="text-gray-500 text-center">No allergies found</p>
             )}

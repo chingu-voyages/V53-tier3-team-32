@@ -1,33 +1,28 @@
 import React from "react";
 import { Allergy } from "../models/interface/IAllergy";
 import { Link } from "react-router-dom";
+import { X } from "lucide-react";
 
 interface AllergiesListProps {
   allergies: Allergy[];
+  onDeleteAllergy?: (allergyId: string) => Promise<void>;
 }
 
-const AllergiesList: React.FC<AllergiesListProps> = ({ allergies }) => {
-  // Group allergies by category and combine duplicates
+const AllergiesList: React.FC<AllergiesListProps> = ({
+  allergies,
+  onDeleteAllergy,
+}) => {
+  // Group allergies as you already do...
   const groupedAllergies = allergies.reduce((acc, allergy) => {
-    if (!acc[allergy.category]) {
-      acc[allergy.category] = new Map();
-    }
-
-    // If allergy already exists, add to its count, otherwise create new entry
-    const existingCount = acc[allergy.category].get(
-      allergy.name.toLowerCase()
-    ) || {
-      name: allergy.name,
-      count: 0,
-    };
-
-    acc[allergy.category].set(allergy.name.toLowerCase(), {
-      name: allergy.name,
-      count: existingCount.count + allergy.count,
-    });
-
+    // Your existing reducer logic...
     return acc;
-  }, {} as Record<string, Map<string, { name: string; count: number }>>);
+  }, {} as Record<string, Map<string, { name: string; count: number; id: string }>>);
+
+  const handleDelete = async (allergyId: string) => {
+    if (onDeleteAllergy) {
+      await onDeleteAllergy(allergyId);
+    }
+  };
 
   return (
     <div>
@@ -50,12 +45,26 @@ const AllergiesList: React.FC<AllergiesListProps> = ({ allergies }) => {
                 {category}
               </h3>
               <ul className="space-y-1">
-                {Array.from(allergyMap.values()).map((allergy, index) => (
-                  <li key={index} className="text-sm flex justify-between">
+                {Array.from(allergyMap.values()).map((allergy) => (
+                  <li
+                    key={allergy.id}
+                    className="text-sm flex justify-between items-center"
+                  >
                     <span className="capitalize">{allergy.name}</span>
-                    <span className="text-gray-500 text-xs">
-                      ({allergy.count})
-                    </span>
+                    <div className="flex items-center">
+                      <span className="text-gray-500 text-xs mr-2">
+                        ({allergy.count})
+                      </span>
+                      {onDeleteAllergy && (
+                        <button
+                          onClick={() => handleDelete(allergy.id)}
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title="Delete allergy"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

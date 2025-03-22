@@ -6,6 +6,13 @@ export const AllergyRoute = Router();
 
 AllergyRoute.post("/create", asyncHandler(allergyController.createAllergy));
 AllergyRoute.get("/allergies", asyncHandler(allergyController.getAllergies));
-AllergyRoute.post("/add-category", asyncHandler(allergyController.createAllergiesByCategory));
+AllergyRoute.post(
+  "/add-category",
+  asyncHandler(allergyController.createAllergiesByCategory)
+);
+AllergyRoute.delete(
+  "/delete/:id",
+  asyncHandler(allergyController.deleteAllergy)
+);
 
 export default AllergyRoute;

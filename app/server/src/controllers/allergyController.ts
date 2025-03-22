@@ -121,3 +121,44 @@ export const createAllergiesByCategory = async (
     });
   }
 };
+
+export const deleteAllergy = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  try {
+    const allergy = await Allergy.findById(id);
+    if (!allergy) {
+      res.status(404).json({
+        success: false,
+        msg: "Allergy not found",
+      });
+      return;
+    }
+
+    // If count is greater than 1, decrement the count
+    if (allergy.count > 1) {
+      allergy.count -= 1;
+      await allergy.save();
+      res.status(200).json({
+        success: true,
+        msg: "Allergy count decreased",
+        allergy,
+      });
+    } else {
+      // Otherwise, remove the allergy entirely
+      await Allergy.findByIdAndDelete(id);
+      res.status(200).json({
+        success: true,
+        msg: "Allergy deleted",
+      });
+    }
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      msg: error?.message || "Error deleting allergy",
+    });
+  }
+};
