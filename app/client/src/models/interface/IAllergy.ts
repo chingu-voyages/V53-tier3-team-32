@@ -1,4 +1,5 @@
 export interface Allergy {
+  _id: string;
   name: string;
   category: 'fruits' | 'vegetables' | 'dairy' | 'meat' | 'grains' | 'spices' | 'beverages';
   count: number;
