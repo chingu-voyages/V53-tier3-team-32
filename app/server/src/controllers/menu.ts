@@ -12,16 +12,6 @@ export const createWeeklyMenu = async (
   try {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (start < today) {
-      res.status(400).json({
-        message: "Cannot create menu for past dates",
-        success: false,
-      });
-      return;
-    }
 
     if (!req.user?._id) {
       res.status(401).json({
@@ -40,13 +30,15 @@ export const createWeeklyMenu = async (
 
     if (existingMenu) {
       if (override) {
+        // User intends to override. Delete the existing menu.
+        // The "past date" check is less relevant here since we are replacing a specific existing menu.
         await Menu.deleteOne({
           _id: existingMenu._id,
           createdBy: req.user!._id,
         });
       } else {
+        // Menu exists, and no override flag. Send conflict.
         res.status(409).json({
-          // Conflict
           success: false,
           message:
             "A menu already exists for these dates. Confirm to override.",
@@ -54,8 +46,21 @@ export const createWeeklyMenu = async (
         });
         return;
       }
+    } else {
+      // No existing menu. This is a new menu creation.
+      // Perform the "past date" check now.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (start < today) {
+        res.status(400).json({
+          message: "Cannot create menu for past dates",
+          success: false,
+        });
+        return;
+      }
     }
 
+    // Proceed to create the menu (either it's new, or we've deleted the old one for an override)
     const newMenuDoc = await Menu.create({
       startDate: start,
       endDate: end,
@@ -69,20 +74,24 @@ export const createWeeklyMenu = async (
     });
   } catch (err) {
     const error = err as Error;
+    // This catch block handles errors from Menu.create or other unexpected errors.
+    // The Mongoose pre-save hook might also throw "Menu already exists..." if two requests try to save simultaneously
+    // for the same dates after the initial check, or if the delete operation in override had an issue.
     if (
-      error.message.includes("Menu already exists for these dates") &&
-      !override
+      error.message.includes("Menu already exists for these dates")
+      // We don't need && !override here anymore, as the 409 for non-override is handled above.
+      // This specific error from the pre-save hook would indicate a genuine conflict during creation.
     ) {
       res.status(409).json({
         success: false,
-        message: error.message,
-        requiresOverride: true,
+        message: error.message, 
+        requiresOverride: true, 
       });
       return;
     }
-    res.status(400).json({
+    res.status(500).json({
       success: false,
-      message: error.message || "An error occurred",
+      message: error.message || "An error occurred while saving the menu.",
     });
   }
 };
