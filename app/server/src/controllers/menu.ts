@@ -7,7 +7,7 @@ export const createWeeklyMenu = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { startDate, endDate, weeklyMenu } = req.body;
+  const { startDate, endDate, weeklyMenu, override } = req.body;
 
   try {
     const start = new Date(startDate);
@@ -31,23 +31,101 @@ export const createWeeklyMenu = async (
       return;
     }
 
-    const menu = await Menu.create({
-      startDate,
-      endDate,
+    const existingMenuQuery = {
+      $or: [{ startDate: { $lte: end }, endDate: { $gte: start } }],
+      createdBy: req.user!._id,
+    };
+
+    const existingMenu = await Menu.findOne(existingMenuQuery);
+
+    if (existingMenu) {
+      if (override) {
+        await Menu.deleteOne({
+          _id: existingMenu._id,
+          createdBy: req.user!._id,
+        });
+      } else {
+        res.status(409).json({
+          // Conflict
+          success: false,
+          message:
+            "A menu already exists for these dates. Confirm to override.",
+          requiresOverride: true,
+        });
+        return;
+      }
+    }
+
+    const newMenuDoc = await Menu.create({
+      startDate: start,
+      endDate: end,
       weeklyMenu,
-      createdBy: req.user._id,
+      createdBy: req.user!._id,
     });
 
     res.status(201).json({
       success: true,
-      data: menu,
+      data: newMenuDoc,
     });
   } catch (err) {
     const error = err as Error;
+    if (
+      error.message.includes("Menu already exists for these dates") &&
+      !override
+    ) {
+      res.status(409).json({
+        success: false,
+        message: error.message,
+        requiresOverride: true,
+      });
+      return;
+    }
     res.status(400).json({
       success: false,
       message: error.message || "An error occurred",
     });
+  }
+};
+
+export const updateDayMeals = async (req: Request, res: Response): Promise<void> => {
+  const { menuId, dayName } = req.params;
+  const { dishes } = req.body; // Expecting { dishes: ["meal1", "meal2", "meal3"] }
+
+  if (!req.user?._id) {
+    res.status(401).json({ message: "User not authenticated", success: false });
+    return;
+  }
+  if (!Array.isArray(dishes) || dishes.length !== 3 || !dishes.every(d => typeof d === 'string')) {
+    res.status(400).json({ message: "Invalid 'dishes' format.", success: false });
+    return;
+  }
+
+  try {
+    const menu = await Menu.findOne({ _id: menuId, createdBy: req.user._id });
+    if (!menu) {
+      res.status(404).json({ message: "Menu not found or user not authorized", success: false });
+      return;
+    }
+
+    const dayToUpdate = menu.weeklyMenu.find(d => d.day === dayName);
+    if (!dayToUpdate) {
+      res.status(404).json({ message: `Day '${dayName}' not found in this menu`, success: false });
+      return;
+    }
+
+    if (dayToUpdate.isDayOff) {
+      res.status(400).json({ message: "Cannot edit meals for a day marked as 'Day Off'.", success: false });
+      return;
+    }
+
+    dayToUpdate.dishes = dishes;
+    menu.updated_at = new Date();
+    await menu.save();
+
+    res.status(200).json({ success: true, data: menu, message: `Meals for ${dayName} updated.` });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An error occurred";
+    res.status(500).json({ success: false, message: errorMessage });
   }
 };
 
@@ -152,7 +230,7 @@ export const generateWeeklyMenu = async (
     // Get meals separated by type
     const meals = await mealApiService.getRandomMealsWithoutAllergies(35); // 7 breakfasts + 14 lunches + 14 dinners
 
-    const weeklyMenu = [
+    const weeklyMenuData = [
       "Monday",
       "Tuesday",
       "Wednesday",
@@ -167,18 +245,20 @@ export const generateWeeklyMenu = async (
         meals.mainDishes[index]?.strMeal || "No lunch available",
         meals.mainDishes[index + 7]?.strMeal || "No dinner available",
       ],
+      isDayOff: false,
     }));
 
-    const menu = await Menu.create({
+    const newMenuDoc = await Menu.create({
+      // Renamed variable to avoid conflict
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      weeklyMenu,
+      weeklyMenu: weeklyMenuData,
       createdBy: req.user._id,
     });
 
     res.status(201).json({
       success: true,
-      data: menu,
+      data: newMenuDoc,
     });
   } catch (error) {
     let errorMessage = "An error occurred";
@@ -188,6 +268,61 @@ export const generateWeeklyMenu = async (
     res.status(400).json({
       success: false,
       message: errorMessage,
+    });
+  }
+};
+
+export const toggleDayOffStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { menuId, dayName } = req.params;
+
+  if (!req.user?._id) {
+    res.status(401).json({ message: "User not authenticated", success: false });
+    return;
+  }
+
+  try {
+    const menu = await Menu.findOne({ _id: menuId, createdBy: req.user._id });
+
+    if (!menu) {
+      res.status(404).json({
+        message: "Menu not found or user not authorized",
+        success: false,
+      });
+      return;
+    }
+
+    const dayToUpdate = menu.weeklyMenu.find((d) => d.day === dayName);
+
+    if (!dayToUpdate) {
+      res.status(404).json({
+        message: `Day '${dayName}' not found in this menu`,
+        success: false,
+      });
+      return;
+    }
+
+    dayToUpdate.isDayOff = !dayToUpdate.isDayOff;
+    // if (dayToUpdate.isDayOff) { // Optionally clear dishes on backend too
+    //   dayToUpdate.dishes = ["Day Off", "Day Off", "Day Off"];
+    // }
+
+    menu.updated_at = new Date();
+    await menu.save();
+
+    res.status(200).json({
+      success: true,
+      data: menu,
+      message: `Successfully toggled Day Off status for ${dayName}.`,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "An error occurred";
+    res.status(500).json({
+      success: false,
+      message: `Error toggling day off status: ${errorMessage}`,
     });
   }
 };

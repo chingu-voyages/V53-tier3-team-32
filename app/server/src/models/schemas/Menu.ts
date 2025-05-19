@@ -9,6 +9,7 @@ const MenuSchema = new Schema<IMenu>({
     {
       day: { type: String, required: true },
       dishes: [{ type: String, required: true }],
+      isDayOff: { type: Boolean, default: false },
     },
   ],
   createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },

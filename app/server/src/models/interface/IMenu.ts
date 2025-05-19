@@ -6,6 +6,7 @@ export interface IMenu {
     weeklyMenu: {
       day: string;
       dishes: string[];
+      isDayOff: boolean;
     }[];
     createdBy: Schema.Types.ObjectId;
     created_at: Date;

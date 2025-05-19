@@ -10,9 +10,11 @@ import { useNavigate } from "react-router-dom";
 interface DayMenu {
   day: string;
   dishes: string[];
+  isDayOff: boolean;
 }
 
 interface Menu {
+  _id: string;
   weeklyMenu: DayMenu[];
   startDate: Date;
   endDate: Date;
@@ -29,6 +31,8 @@ const Dashboard: React.FC = () => {
     { startDate: Date; endDate: Date }[]
   >([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [editingDay, setEditingDay] = useState<DayMenu | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -39,6 +43,58 @@ const Dashboard: React.FC = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
+
+  //toggle day off function
+  const toggleDayOffStatus = async (dayString: string) => {
+    if (!menu || !(menu as any)._id) {
+      setError("Menu data is not available to update.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/signin");
+      return;
+    }
+
+    const menuId = (menu as any)._id;
+
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `https://menu-scheduler-backend.onrender.com/api/menu/${menuId}/day/${dayString}/toggle-off`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update day status");
+      }
+
+      const updatedMenu = await response.json();
+      if (updatedMenu.success && updatedMenu.data) {
+        setMenu(updatedMenu.data);
+        setError(null);
+      } else {
+        throw new Error(
+          updatedMenu.message || "Failed to update menu data after toggle."
+        );
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Error toggling day off status"
+      );
+      console.error("Error toggling day off status:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const groupedAllergies = allergies.reduce((acc, allergy) => {
     if (!acc[allergy.category]) {
@@ -201,6 +257,71 @@ const Dashboard: React.FC = () => {
       setLoading(false);
     }
   }, [navigate, selectedDate]);
+
+  const handleEditDayClick = (dayMenu: DayMenu) => {
+    setEditingDay({ ...dayMenu, dishes: [...dayMenu.dishes] }); // Deep copy dishes
+    setShowEditModal(true);
+  };
+
+  const handleEditModalClose = () => {
+    setShowEditModal(false);
+    setEditingDay(null);
+  };
+
+  const handleEditDayMealChange = (mealIndex: number, value: string) => {
+    if (editingDay) {
+      const newDishes = [...editingDay.dishes];
+      newDishes[mealIndex] = value;
+      setEditingDay({ ...editingDay, dishes: newDishes });
+    }
+  };
+
+  const handleSaveDayChanges = async () => {
+    if (!editingDay || !menu || !(menu as any)._id) {
+      setError("Menu or editing day data is missing.");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/signin");
+      return;
+    }
+    const menuId = (menu as any)._id;
+
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `https://menu-scheduler-backend.onrender.com/api/menu/${menuId}/day/${editingDay.day}/meals`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ dishes: editingDay.dishes }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update meals");
+      }
+      const updatedMenu = await response.json();
+      if (updatedMenu.success && updatedMenu.data) {
+        setMenu(updatedMenu.data);
+        setError(null);
+        handleEditModalClose();
+      } else {
+        throw new Error(
+          updatedMenu.message || "Failed to update menu data after edit."
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error updating meals");
+      console.error("Error updating meals:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generateNewMenu = async () => {
     try {
@@ -473,19 +594,58 @@ const Dashboard: React.FC = () => {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold">{day.day}</h3>
+                    <div className="flex items-center space-x-2">
+                      {!day.isDayOff && (
+                        <button
+                          onClick={() => handleEditDayClick(day)}
+                          disabled={loading}
+                          className="p-1 text-blue-500 hover:text-blue-700"
+                          title="Edit Meals"
+                        >
+                          {/* Replace with an actual Edit icon */}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => toggleDayOffStatus(day.day)}
+                        disabled={loading}
+                        className={`px-3 py-1 text-xs rounded ${
+                          day.isDayOff
+                            ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                            : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                        }`}
+                      >
+                        {day.isDayOff ? "Undo Day Off" : "Mark as Day Off"}
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    {["Breakfast", "Lunch", "Dinner"].map((meal, index) => (
-                      <div key={meal}>
-                        <span className="text-sm font-medium text-gray-500">
-                          {meal}:
-                        </span>
-                        <p className="mt-1">
-                          {day.dishes[index] || "No meal scheduled"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                  {day.isDayOff ? (
+                    <div className="text-center text-gray-500 py-4">
+                      <p>Day Off</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {["Breakfast", "Lunch", "Dinner"].map(
+                        (mealType, index) => (
+                          <div key={mealType}>
+                            <span className="text-sm font-medium text-gray-500">
+                              {mealType}:
+                            </span>
+                            <p className="mt-1">
+                              {day.dishes[index] || "No meal scheduled"}
+                            </p>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -549,6 +709,53 @@ const Dashboard: React.FC = () => {
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Day Modal */}
+      {showEditModal && editingDay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black opacity-50"
+            onClick={handleEditModalClose}
+          ></div>
+          <div className="bg-white rounded-lg shadow-lg z-50 p-6 w-11/12 max-w-lg">
+            <h3 className="text-xl font-bold mb-4">
+              Edit Meals for {editingDay.day}
+            </h3>
+            <div className="space-y-4">
+              {["Breakfast", "Lunch", "Dinner"].map((mealType, index) => (
+                <div key={mealType}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {mealType}
+                  </label>
+                  <input
+                    type="text"
+                    value={editingDay.dishes[index] || ""}
+                    onChange={(e) =>
+                      handleEditDayMealChange(index, e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={handleEditModalClose}
+                className="px-4 py-2 bg-gray-200 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveDayChanges}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                {loading ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
