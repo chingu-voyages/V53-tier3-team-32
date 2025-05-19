@@ -9,18 +9,14 @@ const MenuSchema = new Schema<IMenu>({
     {
       day: { type: String, required: true },
       dishes: {
-        type: [String], 
+        type: [String],
         required: true,
         validate: {
           validator: function(arr: string[]) {
-            // Ensure it's an array of 3 strings.
-            // The client sends ["", "", ""] for days off.
             return Array.isArray(arr) && arr.length === 3 && arr.every(s => typeof s === 'string');
           },
           message: 'Dishes array must contain 3 meal strings.'
         },
-        // Defaulting here ensures that if weeklyMenu items are somehow created without dishes,
-        // they get this default. Client-side logic in SchedulesPage.tsx already provides ["", "", ""].
         default: () => ["", "", ""],
       },
       isDayOff: { type: Boolean, default: false },
@@ -31,28 +27,36 @@ const MenuSchema = new Schema<IMenu>({
   updated_at: { type: Date, default: Date.now },
 });
 
-//validation to prevent overlapping dates (ensure this doesn't conflict with override logic)
 MenuSchema.pre("save", async function (next) {
-  if (this.isNew) { // Only run this check for new documents, not for updates from .save() on existing doc
-    const existingMenu = await mongoose.model('Menu').findOne({ 
+  // Only run this check for new documents, not for updates from .save() on existing doc
+  // or when the document is being created as part of an override where the controller handles conflict.
+  if (this.isNew) {
+    // Use this.constructor to refer to the Menu model, cast to Model<IMenu> for type safety
+    const MenuModel = this.constructor as Model<IMenu>;
+    
+    const existingMenu = await MenuModel.findOne({
       $or: [
         {
           startDate: { $lte: this.endDate },
           endDate: { $gte: this.startDate },
         },
       ],
-      createdBy: this.createdBy, 
-      _id: { $ne: this._id },
+      createdBy: this.createdBy,
+      // _id: { $ne: this._id } // this._id might not be set yet for a truly new doc,
+                               // but if it were, this would prevent self-conflict.
+                               // The main conflict check is in the controller.
     });
 
     if (existingMenu) {
-      // This error is now primarily handled in the controller before attempting to save.
-      // This pre-save hook acts as a final safety net, especially against race conditions.
-      // The controller's override logic (delete then create) bypasses this for the 'new' doc being created.
-      return next(new Error("Menu already exists for these dates. This is a pre-save hook check."));
+      // This error is primarily for race conditions or direct saves bypassing controller logic.
+      // The controller's createWeeklyMenu handles the user-facing override flow.
+      const err = new Error("Menu already exists for these dates. This is a pre-save hook check.");
+      // You might want to attach a property to the error if the client needs to distinguish this
+      // (e.g., err.requiresOverride = true;), but the controller already does this.
+      return next(err);
     }
   }
   next();
 });
 
-export const Menu: Model<IMenu> = DB.model("Menu", MenuSchema);
+export const Menu: Model<IMenu> = DB.model<IMenu>("Menu", MenuSchema);
