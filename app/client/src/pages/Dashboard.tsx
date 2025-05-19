@@ -391,33 +391,72 @@ const Dashboard: React.FC = () => {
   };
 
   const exportToPDF = async () => {
+    if (!menu || !menu._id) {
+      setError("No menu selected or menu ID is missing to export.");
+      console.error("Export PDF: Menu or menu._id is not available.", menu);
+      return;
+    }
     try {
       setError(null);
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/signin");
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(
-        "https://menu-scheduler-backend.onrender.com/api/menu/export",
+        `https://menu-scheduler-backend.onrender.com/api/menu/export?menuId=${menu._id}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to export menu");
+        let errorMsg = `Failed to export menu. Status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (e) {
+          // If response is not JSON, use text or generic message
+          const textError = await response.text();
+          errorMsg = textError || errorMsg;
+          console.error("Non-JSON error response from server:", textError);
+        }
+        throw new Error(errorMsg);
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `weekly-menu-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+
+      let filename = `weekly-menu.pdf`; // Default filename
+      const contentDisposition = response.headers.get('content-disposition');
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+        if (filenameMatch && filenameMatch.length > 1) {
+          filename = filenameMatch[1];
+        }
+      } else if (menu.startDate) {
+        // Fallback to generate filename based on menu's start date if header not present
+        filename = `weekly-menu-${format(new Date(menu.startDate), "yyyy-MM-dd")}.pdf`;
+      }
+
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Error exporting menu");
+      const message = error instanceof Error ? error.message : "Unknown error exporting menu";
+      setError(message);
       console.error("Error exporting menu:", error);
+    } finally {
+      setLoading(false);
     }
   };
 

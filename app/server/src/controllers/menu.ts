@@ -331,26 +331,62 @@ export const exportMenuAsPDF = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const { menuId } = req.query; // Expect menuId from query params
+
+  if (!req.user?._id) {
+    // This check should ideally be handled by authenticateJWT middleware first
+    if (!res.headersSent) {
+      res.status(401).json({ success: false, message: "User not authenticated" });
+    }
+    return;
+  }
+
+  if (!menuId || typeof menuId !== 'string') {
+    if (!res.headersSent) {
+      res.status(400).json({ success: false, message: "Menu ID is required for export." });
+    }
+    return;
+  }
+
   try {
     const menu = await Menu.findOne({
-      startDate: { $lte: new Date() },
-      endDate: { $gte: new Date() },
+      _id: menuId,
+      createdBy: req.user._id, // Ensure user owns the menu
     });
 
     if (!menu) {
-      res.status(404).json({ message: "No current menu found" });
+      if (!res.headersSent) {
+        res.status(404).json({ success: false, message: "Menu not found or not authorized to export." });
+      }
       return;
     }
 
+    // Set headers *before* calling the service that will pipe to the response
+    const startDateString = menu.startDate.toISOString().split('T')[0];
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=weekly-menu-${startDateString}.pdf`
+    );
+
+    // pdfService.generateMenuPdf is expected to pipe to 'res' and end it.
     pdfService.generateMenuPdf(menu, res);
+
   } catch (error) {
-    let errorMessage = "An error occurred";
-    if (error instanceof Error) {
-      errorMessage = error.message;
+    console.error("Error exporting PDF:", error);
+    // If headers have not been sent, we can send a JSON error response.
+    // Otherwise, the stream is already being handled (or has ended), and we should not interfere.
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: "An error occurred during PDF export.",
+      });
+    } else if (res.writable && !res.writableEnded) {
+      // If headers were sent but stream is still writable and not ended (e.g., error during piping),
+      // end the stream to prevent client hanging. Client might get partial/corrupt PDF.
+      res.end();
     }
-    res.status(400).json({
-      success: false,
-      message: errorMessage,
-    });
+    // If headersSent and writableEnded, the stream was already closed, possibly by pdfService.generateMenuPdf or due to the error.
+    // Logging the error is the main action here.
   }
 };
