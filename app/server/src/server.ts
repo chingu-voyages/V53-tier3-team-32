@@ -39,6 +39,10 @@ app.use("/auth", authroute);
 app.use("/api/menu", menuRouter);
 app.use("/api/allergy", AllergyRoute);
 
+app.get("/healthz", (req: Request, res: Response) => {
+  res.sendStatus(200);
+});
+
 app.listen(port, "0.0.0.0", () => {
   console.log(`Example app listening on port ${port}`);
 });
