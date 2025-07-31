@@ -37,7 +37,7 @@ coding!
 - Anita Boakye-Yiadom: [GitHub](https://github.com/AnitaBoakye) / [LinkedIn](https://linkedin.com/in/anitaboakyeyiadom)
 - Boris Hubavenski: [GitHub](https://github.com/bhubavenski) / [LinkedIn](https://linkedin.com/in/boris-hubavenski)
 - Andreea Tohatan [GitHub](http://github.com/Andreea-A-T) / [LinkedIn](http://linkedin.com/in/andreea-anamaria-tohatan)
-- Denis Mwangi: [GitHub](https://github.com/denismwangikimani) / [LinkedIn](https://www.linkedin.com/in/denis-kimani)
+- Denis Mwangi: [GitHub](https://github.com/denismwangikimani) / [LinkedIn](https://www.linkedin.com/in/denismwangikimani)
 - Ibrahim Abdoh: [GitHub](https://github.com/ibrahim-b-dev) / [LinkedIn](https://linkedin.com/)
 - Oshada Kularathne: [GitHub](https://github.com/devimalka) / [LinkedIn](https://linkedin.com/in/oshada-kularathne)
 
